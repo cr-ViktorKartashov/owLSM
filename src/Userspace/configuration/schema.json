@@ -95,6 +95,10 @@
                 },
                 "set_limits": {
                     "type": "boolean"
+                },
+                "log_location": {
+                    "type": "string",
+                    "minLength": 1
                 }
             }
         },
