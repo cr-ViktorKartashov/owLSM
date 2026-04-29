@@ -13,6 +13,7 @@ enum class probe_type
     UNKNOWN,
     PROBE_MANAGER,
     LSM,
+    TC,
     FENTRY,
     TRACEPOINT,
     UPROBE
@@ -45,7 +46,7 @@ protected:
     virtual void attachProbe(const bpf_program* program, bpf_link** link)
     {
         bpf_link* new_link = bpf_program__attach(program);
-        if(!new_link)
+        if (!new_link)
         {
             throw std::runtime_error("failed to attach probe. errno: " + std::to_string(errno) + " program: " + bpf_program__name(program));
         }

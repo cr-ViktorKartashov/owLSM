@@ -159,9 +159,51 @@ statfunc int fieldref_pred_get_numeric_value(const struct event_t *current_event
 
         // Event-specific fields
         case CHMOD_REQUESTED_MODE: return current_event->data.chmod.requested_mode;
-        case NETWORK_SOURCE_PORT: return current_event->data.network.source_port;
-        case NETWORK_DESTINATION_PORT: return current_event->data.network.destination_port;
-        case NETWORK_DIRECTION: return current_event->data.network.direction;
+        case NETWORK_SOURCE_PORT:
+            if (current_event->type == NETWORK)
+            {
+                return current_event->data.network.source_port;
+            }
+            if (current_event->type == DNS_QUERY)
+            {
+                return current_event->data.dns_query.network.source_port;
+            }
+            if (current_event->type == DNS_RESPONSE)
+            {
+                return current_event->data.dns_response.network.source_port;
+            }
+            REPORT_ERROR(GENERIC_ERROR, "invalid event type for NETWORK_SOURCE_PORT: %d", current_event->type);
+            return FALSE;
+        case NETWORK_DESTINATION_PORT:
+            if (current_event->type == NETWORK)
+            {
+                return current_event->data.network.destination_port;
+            }
+            if (current_event->type == DNS_QUERY)
+            {
+                return current_event->data.dns_query.network.destination_port;
+            }
+            if (current_event->type == DNS_RESPONSE)
+            {
+                return current_event->data.dns_response.network.destination_port;
+            }
+            REPORT_ERROR(GENERIC_ERROR, "invalid event type for NETWORK_DESTINATION_PORT: %d", current_event->type);
+            return FALSE;
+        case NETWORK_DIRECTION:
+            if (current_event->type == NETWORK)
+            {
+                return current_event->data.network.direction;
+            }
+            if (current_event->type == DNS_QUERY)
+            {
+                return current_event->data.dns_query.network.direction;
+            }
+            if (current_event->type == DNS_RESPONSE)
+            {
+                return current_event->data.dns_response.network.direction;
+            }
+            REPORT_ERROR(GENERIC_ERROR, "invalid event type for NETWORK_DIRECTION: %d", current_event->type);
+            return FALSE;
 
         default:
             REPORT_ERROR(GENERIC_ERROR, "invalid numeric fieldref: %d", fieldref);
@@ -236,7 +278,7 @@ statfunc int fieldref_pred_fill_needle_target_process(const struct event_t *curr
 statfunc int fieldref_pred_fill_needle(struct string_utils_ctx *sctx, enum rule_field_type fieldref)
 {
     const struct event_t *current_event = get_currently_handled_event();
-    if(!current_event)
+    if (!current_event)
     {
         return FALSE;
     }

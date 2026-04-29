@@ -279,6 +279,100 @@ TEST_F(EventToFlatbufferTest, network_event_ipv4)
     EXPECT_STREQ(net->network()->destination_ip()->c_str(), "192.168.0.1");
 }
 
+TEST_F(EventToFlatbufferTest, dns_query_event_serialization)
+{
+    auto ev = makeBaseEvent(DNS_QUERY, 91);
+    owlsm::events::DnsQueryEventData dns_data;
+    dns_data.network.direction = OUTGOING;
+    dns_data.network.protocol = 17;
+    dns_data.network.ip_type = AF_INET;
+    dns_data.network.source_port = 53000;
+    dns_data.network.destination_port = 53;
+    owlsm::events::Ipv4Addresses ipv4;
+    ipv4.source_ip = htonl(0x0A000001);
+    ipv4.destination_ip = htonl(0x08080808);
+    dns_data.network.addresses = ipv4;
+    dns_data.txid = 777;
+    dns_data.question = "google.com";
+    dns_data.question_type = 1;
+    ev->data = dns_data;
+
+    std::vector<std::shared_ptr<owlsm::events::Event>> msgs = {ev};
+    m_event_serializer.buildOutputBuffer(msgs);
+
+    const auto* fb_ev = getSizePrefixedEvent(m_event_serializer.data());
+    ASSERT_NE(fb_ev, nullptr);
+    EXPECT_EQ(fb_ev->type(), owlsm::fb::EventType::DNS_QUERY);
+    EXPECT_EQ(fb_ev->data_type(), owlsm::fb::EventData::DnsQueryEventData);
+
+    const auto* dns = fb_ev->data_as_DnsQueryEventData();
+    ASSERT_NE(dns, nullptr);
+    ASSERT_NE(dns->network(), nullptr);
+    ASSERT_NE(dns->dns_query(), nullptr);
+    EXPECT_EQ(dns->network()->protocol(), 17u);
+    EXPECT_EQ(dns->network()->source_port(), 53000u);
+    EXPECT_EQ(dns->network()->destination_port(), 53u);
+    EXPECT_STREQ(dns->network()->source_ip()->c_str(), "10.0.0.1");
+    EXPECT_STREQ(dns->network()->destination_ip()->c_str(), "8.8.8.8");
+    EXPECT_EQ(dns->dns_query()->txid(), 777u);
+    EXPECT_STREQ(dns->dns_query()->question()->c_str(), "google.com");
+    EXPECT_EQ(dns->dns_query()->question_type(), 1u);
+}
+
+TEST_F(EventToFlatbufferTest, dns_response_event_serialization)
+{
+    auto ev = makeBaseEvent(DNS_RESPONSE, 92);
+    owlsm::events::DnsResponseEventData dns_data;
+    dns_data.network.direction = INCOMING;
+    dns_data.network.protocol = 17;
+    dns_data.network.ip_type = AF_INET;
+    dns_data.network.source_port = 53;
+    dns_data.network.destination_port = 53000;
+    owlsm::events::Ipv4Addresses ipv4;
+    ipv4.source_ip = htonl(0x08080808);
+    ipv4.destination_ip = htonl(0x0A000001);
+    dns_data.network.addresses = ipv4;
+    dns_data.txid = 777;
+    dns_data.question = "google.com";
+    dns_data.question_type = 1;
+    dns_data.answer_count = 1;
+    dns_data.rcode = 0;
+    owlsm::events::DnsAnswer answer;
+    answer.type = 1;
+    answer.data_length = 17;
+    answer.ttl = 300;
+    answer.data = "74.125.196.102";
+    dns_data.answers.push_back(answer);
+    ev->data = dns_data;
+
+    std::vector<std::shared_ptr<owlsm::events::Event>> msgs = {ev};
+    m_event_serializer.buildOutputBuffer(msgs);
+
+    const auto* fb_ev = getSizePrefixedEvent(m_event_serializer.data());
+    ASSERT_NE(fb_ev, nullptr);
+    EXPECT_EQ(fb_ev->type(), owlsm::fb::EventType::DNS_RESPONSE);
+    EXPECT_EQ(fb_ev->data_type(), owlsm::fb::EventData::DnsResponseEventData);
+
+    const auto* dns = fb_ev->data_as_DnsResponseEventData();
+    ASSERT_NE(dns, nullptr);
+    ASSERT_NE(dns->network(), nullptr);
+    ASSERT_NE(dns->dns_response(), nullptr);
+    EXPECT_EQ(dns->network()->protocol(), 17u);
+    EXPECT_EQ(dns->network()->source_port(), 53u);
+    EXPECT_EQ(dns->network()->destination_port(), 53000u);
+    EXPECT_STREQ(dns->network()->source_ip()->c_str(), "8.8.8.8");
+    EXPECT_STREQ(dns->network()->destination_ip()->c_str(), "10.0.0.1");
+    EXPECT_EQ(dns->dns_response()->txid(), 777u);
+    EXPECT_STREQ(dns->dns_response()->question()->c_str(), "google.com");
+    EXPECT_EQ(dns->dns_response()->answer_count(), 1u);
+    ASSERT_NE(dns->dns_response()->answers(), nullptr);
+    ASSERT_EQ(dns->dns_response()->answers()->size(), 1u);
+    EXPECT_EQ(dns->dns_response()->answers()->Get(0)->type(), 1u);
+    EXPECT_EQ(dns->dns_response()->answers()->Get(0)->data_length(), 17u);
+    EXPECT_EQ(dns->dns_response()->answers()->Get(0)->ttl(), 300u);
+    EXPECT_STREQ(dns->dns_response()->answers()->Get(0)->data()->c_str(), "74.125.196.102");
+}
+
 TEST_F(EventToFlatbufferTest, event_with_matched_rule)
 {
     auto ev = makeBaseEvent(CHMOD, 20);

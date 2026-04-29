@@ -54,6 +54,9 @@ make -j$(nproc)
 # Build unit tests
 make test -j$(nproc)
 
+# Alternative CI-compatible unit-test build invocation
+docker run -it --rm -v "$PWD":/workspace -w /workspace owlsm-ci-ubuntu20 make test -j8
+
 # Exit container, can't run owlsm or the tests inside the docker
 exit
 ```
@@ -91,6 +94,10 @@ cd build/unit_tests/bin
 # Run the unit tests
 sudo ./unit_tests
 ```
+
+For DNS monitoring:
+- `DNS_QUERY` events come from the LSM sendmsg path.
+- `DNS_RESPONSE` events come from TC ingress attachment on network interfaces.
 
 ## Check Compatibility
 

@@ -70,6 +70,8 @@ Every event shares a common top-level structure. The `data` field varies dependi
 | `READ` | File read |
 | `RENAME` | File rename / move |
 | `NETWORK` | Network connection (TCP) |
+| `DNS_QUERY` | DNS query event |
+| `DNS_RESPONSE` | DNS response event |
 
 ### Actions
 
@@ -332,6 +334,64 @@ For <code>MKDIR</code> and <code>RMDIR</code>, the file <code>type</code> will b
         "destination_port": 443,
         "protocol": 6,
         "ip_type": 2
+    }
+}</code></pre>
+</div>
+</div>
+</details>
+
+<details class="field-dropdown">
+<summary><strong>DNS_QUERY</strong> — DNS query event</summary>
+<div class="field-content">
+<div class="interactive-code">
+<pre><code>"data": {
+    "network": {
+        "direction": "OUTGOING",
+        "source_ip": "192.168.1.100",
+        "destination_ip": "8.8.8.8",
+        "source_port": 43000,
+        "destination_port": 53,
+        "protocol": 17,
+        "ip_type": 2
+    },
+    "dns_query": {
+        "txid": 500,
+        "question": "google.com",
+        "question_type": 1
+    }
+}</code></pre>
+</div>
+</div>
+</details>
+
+<details class="field-dropdown">
+<summary><strong>DNS_RESPONSE</strong> — DNS response event</summary>
+<div class="field-content">
+<div class="interactive-code">
+<pre><code>"data": {
+    "network": {
+        "direction": "INCOMING",
+        "source_ip": "8.8.8.8",
+        "destination_ip": "192.168.1.100",
+        "source_port": 53,
+        "destination_port": 43000,
+        "protocol": 17,
+        "ip_type": 2
+    },
+    "dns_response": {
+        "txid": 500,
+        "question": "google.com",
+        "question_type": 1,
+        "answer_count": 1,
+        "rcode": 0,
+        "answers": [
+            {
+                "type": 1,
+                "data_length": 4,
+                "ttl": 30,
+                "data": "74.125.196.102"
+            }
+        ]
     }
 }</code></pre>
 </div>

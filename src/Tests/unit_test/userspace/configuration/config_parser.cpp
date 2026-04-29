@@ -83,6 +83,46 @@ TEST_F(ConfigParserTest, default_values_are_set)
     EXPECT_TRUE(config.rules_config.rules.empty());
 }
 
+TEST_F(ConfigParserTest, network_dns_event_flag_false_is_parsed)
+{
+    const std::string json_str = R"({
+        "features": {
+            "network_monitoring": {
+                "events": {
+                    "dns": false
+                }
+            }
+        }
+    })";
+    const std::string schema_str(reinterpret_cast<const char*>(g_schema_json), g_schema_json_len);
+
+    owlsm::config::ConfigParser parser(json_str, schema_str);
+    auto config = parser.getConfig();
+
+    EXPECT_TRUE(config.features.network_monitoring.enabled);
+    EXPECT_FALSE(config.features.network_monitoring.events.dns);
+}
+
+TEST_F(ConfigParserTest, network_dns_event_flag_true_is_parsed)
+{
+    const std::string json_str = R"({
+        "features": {
+            "network_monitoring": {
+                "events": {
+                    "dns": true
+                }
+            }
+        }
+    })";
+    const std::string schema_str(reinterpret_cast<const char*>(g_schema_json), g_schema_json_len);
+
+    owlsm::config::ConfigParser parser(json_str, schema_str);
+    auto config = parser.getConfig();
+
+    EXPECT_TRUE(config.features.network_monitoring.enabled);
+    EXPECT_TRUE(config.features.network_monitoring.events.dns);
+}
+
 TEST_F(ConfigParserTest, real_config_is_parsed_correctly) 
 {
     const std::string json_str(REAL_JSON_5);

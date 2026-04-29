@@ -33,7 +33,10 @@ See [How to generate a config](https://github.com/cybereason-labs/owLSM/blob/mai
             "<a href="#features-shell_commands_monitoring-enabled" class="code-link">enabled</a>": true
         },
         "<a href="#features-network_monitoring" class="code-link">network_monitoring</a>": {
-            "<a href="#features-network_monitoring-enabled" class="code-link">enabled</a>": true
+            "<a href="#features-network_monitoring-enabled" class="code-link">enabled</a>": true,
+            "<a class="code-link">events</a>": {
+                "<a href="#features-network_monitoring-events-dns" class="code-link">dns</a>": true
+            }
         }
     },
     "<a href="#userspace" class="code-link">userspace</a>": {
@@ -258,8 +261,7 @@ Supported shells: Bash, Zsh, Dash.
 <p><strong>Default value:</strong> <code>network monitoring is enabled</code></p>
 </div>
 
-Controls network connection monitoring. <br>
-Currently, only TCP connections are supported.
+Controls network monitoring features such as TCP connection events and DNS monitoring.
 </div>
 
 <h3 id="features-network_monitoring-enabled" class="section-anchor">
@@ -274,7 +276,22 @@ Currently, only TCP connections are supported.
 </div>
 
 Enable network connection monitoring.<br>
-Currently, only TCP connections are supported.
+This controls TCP connection monitoring (`NETWORK`) and is also required for DNS monitoring.
+</div>
+
+<h3 id="features-network_monitoring-events-dns" class="section-anchor">
+  <span class="section-path">features<span class="dot">.</span>network_monitoring<span class="dot">.</span>events<span class="dot">.</span>dns</span>
+</h3>
+
+<div class="config-section">
+<div class="field-meta">
+<p><strong>Required:</strong> false</p>
+<p><strong>Default value:</strong> <code>true</code></p>
+<p><strong>Options:</strong> <code>true</code>, <code>false</code></p>
+</div>
+
+Enable DNS monitoring events (<code>DNS_QUERY</code> and <code>DNS_RESPONSE</code>).<br>
+`DNS_QUERY` is collected from the sendmsg LSM path and `DNS_RESPONSE` is collected from TC ingress.
 </div>
 
 ---

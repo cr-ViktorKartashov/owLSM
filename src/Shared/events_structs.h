@@ -21,6 +21,8 @@ enum event_type {
     UNLINK,
     RENAME,
     NETWORK,
+    DNS_QUERY,
+    DNS_RESPONSE,
     MKDIR,
     RMDIR
 };
@@ -166,6 +168,44 @@ struct network_event_t
     
 };
 
+#define DNS_MAX_NAME_LENGTH 128
+#define DNS_MAX_RESPONSES 4
+#define DNS_PACKET_CAPTURE_LENGTH 256
+
+struct dns_answer_t
+{
+    unsigned short type;
+    unsigned short data_length;
+    unsigned int ttl;
+    char data[DNS_MAX_NAME_LENGTH];
+    unsigned char data_len;
+};
+
+struct dns_query_event_t
+{
+    struct network_event_t network;
+    unsigned short txid;
+    unsigned short question_type;
+    char question[DNS_MAX_NAME_LENGTH];
+    unsigned char question_len;
+    unsigned short raw_packet_len;
+    unsigned char raw_packet[DNS_PACKET_CAPTURE_LENGTH];
+};
+
+struct dns_response_event_t
+{
+    struct network_event_t network;
+    unsigned short txid;
+    unsigned short question_type;
+    unsigned short answer_count;
+    unsigned char rcode;
+    char question[DNS_MAX_NAME_LENGTH];
+    unsigned char question_len;
+    struct dns_answer_t answers[DNS_MAX_RESPONSES];
+    unsigned short raw_packet_len;
+    unsigned char raw_packet[DNS_PACKET_CAPTURE_LENGTH];
+};
+
 struct event_t 
 {
     unsigned long long id;
@@ -189,6 +229,8 @@ struct event_t
         unlink_event_t unlink;
         struct rename_event_t rename;
         struct network_event_t network;
+        struct dns_query_event_t dns_query;
+        struct dns_response_event_t dns_response;
         mkdir_event_t mkdir;
         rmdir_event_t rmdir;
     } data;

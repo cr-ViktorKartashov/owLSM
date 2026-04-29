@@ -12,7 +12,7 @@ TEST_F(RulesOrganizerTest, organize_single_rule_single_event)
     rule.applied_events = {READ};
     rules.push_back(rule);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized.size(), 1);
     EXPECT_EQ(organized[READ].size(), 1);
@@ -28,7 +28,7 @@ TEST_F(RulesOrganizerTest, organize_single_rule_multiple_events)
     rule.applied_events = {READ, WRITE, CHMOD};
     rules.push_back(rule);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized.size(), 3);
     EXPECT_EQ(organized[READ].size(), 1);
@@ -64,7 +64,7 @@ TEST_F(RulesOrganizerTest, organize_multiple_rules_sorted_by_id)
     rule2.applied_events = {READ};
     rules.push_back(rule2);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized[READ].size(), 3);
     EXPECT_EQ(organized[READ][0]->id, 1);
@@ -94,7 +94,7 @@ TEST_F(RulesOrganizerTest, organize_multiple_rules_different_events)
     rule3.applied_events = {READ, WRITE};
     rules.push_back(rule3);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized.size(), 2);
     EXPECT_EQ(organized[READ].size(), 2);
@@ -126,7 +126,7 @@ TEST_F(RulesOrganizerTest, filter_below_minimum_version)
     rule2.applied_events = {READ};
     rules.push_back(rule2);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized[READ].size(), 1);
     EXPECT_EQ(organized[READ][0]->id, 2);
@@ -149,7 +149,7 @@ TEST_F(RulesOrganizerTest, filter_above_maximum_version)
     rule2.applied_events = {READ};
     rules.push_back(rule2);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized[READ].size(), 1);
     EXPECT_EQ(organized[READ][0]->id, 2);
@@ -173,7 +173,7 @@ TEST_F(RulesOrganizerTest, filter_both_versions_valid)
     rule2.applied_events = {READ};
     rules.push_back(rule2);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized[READ].size(), 2);
     EXPECT_EQ(organized[READ][0]->id, 1);
@@ -200,7 +200,7 @@ TEST_F(RulesOrganizerTest, filter_read_disabled_removes_read_rules)
     rule2.applied_events = {WRITE};
     rules.push_back(rule2);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized.find(READ), organized.end());
     EXPECT_EQ(organized[WRITE].size(), 1);
@@ -227,7 +227,7 @@ TEST_F(RulesOrganizerTest, filter_file_monitoring_disabled_removes_all)
     rule2.applied_events = {WRITE};
     rules.push_back(rule2);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     EXPECT_EQ(organized.size(), 0);
 }
@@ -246,11 +246,77 @@ TEST_F(RulesOrganizerTest, filter_multi_event_rule_partial_disabled)
     rule1.applied_events = {READ, WRITE};
     rules.push_back(rule1);
     
-    auto organized = owlsm::RulesOrganizer::organize_rules(rules);
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
     
     // READ should be removed, but WRITE should remain
     EXPECT_EQ(organized.find(READ), organized.end());
     EXPECT_EQ(organized[WRITE].size(), 1);
     EXPECT_EQ(organized[WRITE][0]->id, 1);
+}
+
+TEST_F(RulesOrganizerTest, filter_network_monitoring_disabled_removes_network_and_dns_rules)
+{
+    owlsm::globals::g_config.features.network_monitoring.enabled = false;
+    owlsm::globals::g_config.features.network_monitoring.events.dns = true;
+
+    std::vector<owlsm::config::Rule> rules;
+
+    owlsm::config::Rule network_rule;
+    network_rule.id = 10;
+    network_rule.action = BLOCK_EVENT;
+    network_rule.applied_events = {NETWORK};
+    rules.push_back(network_rule);
+
+    owlsm::config::Rule dns_query_rule;
+    dns_query_rule.id = 11;
+    dns_query_rule.action = BLOCK_EVENT;
+    dns_query_rule.applied_events = {DNS_QUERY};
+    rules.push_back(dns_query_rule);
+
+    owlsm::config::Rule dns_response_rule;
+    dns_response_rule.id = 12;
+    dns_response_rule.action = BLOCK_EVENT;
+    dns_response_rule.applied_events = {DNS_RESPONSE};
+    rules.push_back(dns_response_rule);
+
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
+
+    EXPECT_EQ(organized.find(NETWORK), organized.end());
+    EXPECT_EQ(organized.find(DNS_QUERY), organized.end());
+    EXPECT_EQ(organized.find(DNS_RESPONSE), organized.end());
+}
+
+TEST_F(RulesOrganizerTest, filter_dns_disabled_removes_only_dns_rules)
+{
+    owlsm::globals::g_config.features.network_monitoring.enabled = true;
+    owlsm::globals::g_config.features.network_monitoring.events.dns = false;
+
+    std::vector<owlsm::config::Rule> rules;
+
+    owlsm::config::Rule network_rule;
+    network_rule.id = 20;
+    network_rule.action = BLOCK_EVENT;
+    network_rule.applied_events = {NETWORK};
+    rules.push_back(network_rule);
+
+    owlsm::config::Rule dns_query_rule;
+    dns_query_rule.id = 21;
+    dns_query_rule.action = BLOCK_EVENT;
+    dns_query_rule.applied_events = {DNS_QUERY};
+    rules.push_back(dns_query_rule);
+
+    owlsm::config::Rule dns_response_rule;
+    dns_response_rule.id = 22;
+    dns_response_rule.action = BLOCK_EVENT;
+    dns_response_rule.applied_events = {DNS_RESPONSE};
+    rules.push_back(dns_response_rule);
+
+    auto organized = owlsm::RulesOrganizer::organizeRules(rules);
+
+    ASSERT_NE(organized.find(NETWORK), organized.end());
+    EXPECT_EQ(organized[NETWORK].size(), 1);
+    EXPECT_EQ(organized[NETWORK][0]->id, 20);
+    EXPECT_EQ(organized.find(DNS_QUERY), organized.end());
+    EXPECT_EQ(organized.find(DNS_RESPONSE), organized.end());
 }
 

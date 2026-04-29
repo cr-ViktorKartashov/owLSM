@@ -44,6 +44,7 @@ BPF_SRC        := common_maps.bpf.c \
                   Programs/syscall_monitoring/on_rename.bpf.c \
                   Programs/network/on_tcp_incomming.bpf.c \
                   Programs/network/on_tcp_outgoing.bpf.c \
+                  Programs/network/on_dns.bpf.c \
                   Programs/shell_command_monitoring/bash_shell_command.bpf.c \
                   Programs/shell_command_monitoring/zsh_shell_command.bpf.c \
                   Programs/shell_command_monitoring/dash/dash_shell_command.bpf.c

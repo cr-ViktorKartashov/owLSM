@@ -281,6 +281,28 @@ struct {
 extern
 #endif
 struct {
+    __uint(type,       BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, MAX_RULES_PER_MAP_PLUS1);
+    __type(key,        u32);
+    __type(value,      struct rule_t);
+    __uint(pinning,    LIBBPF_PIN_BY_NAME);
+} dns_query_rules SEC(".maps");
+
+#ifndef DEFINE_MAPS
+extern
+#endif
+struct {
+    __uint(type,       BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, MAX_RULES_PER_MAP_PLUS1);
+    __type(key,        u32);
+    __type(value,      struct rule_t);
+    __uint(pinning,    LIBBPF_PIN_BY_NAME);
+} dns_response_rules SEC(".maps");
+
+#ifndef DEFINE_MAPS
+extern
+#endif
+struct {
     __uint(type, BPF_MAP_TYPE_HASH);
     __uint(max_entries, MAX_SHELL_INSTANCES);
     __type(key, unsigned int);

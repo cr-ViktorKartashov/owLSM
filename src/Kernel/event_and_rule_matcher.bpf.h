@@ -59,19 +59,19 @@ statfunc int stack_top(struct eval_stack *stack, struct token_t *out)
 
 statfunc enum token_result get_cached_pred_result(unsigned int pred_idx, const struct event_t *event)
 {
-    if(event->time == 0)
+    if (event->time == 0)
     {
         REPORT_ERROR(GENERIC_ERROR, "event->time is 0");
         return TOKEN_RESULT_UNKNOWN;
     }
 
     struct predicate_result_t *result = bpf_map_lookup_elem(&predicates_results_cache, &pred_idx);
-    if(!result)
+    if (!result)
     {
         return TOKEN_RESULT_UNKNOWN;
     }
 
-    if(event->time == result->time)
+    if (event->time == result->time)
     {
         return result->result;
     }
@@ -80,7 +80,7 @@ statfunc enum token_result get_cached_pred_result(unsigned int pred_idx, const s
 
 statfunc void set_cached_pred_result(unsigned int pred_idx, enum token_result pred_result, const struct event_t *event)
 {
-    if(event->time == 0)
+    if (event->time == 0)
     {
         REPORT_ERROR(GENERIC_ERROR, "event->time is 0");
         return;
@@ -90,7 +90,7 @@ statfunc void set_cached_pred_result(unsigned int pred_idx, enum token_result pr
         .time = event->time,
         .result = pred_result
     };
-    if(bpf_map_update_elem(&predicates_results_cache, &pred_idx, &result, BPF_ANY) != SUCCESS)
+    if (bpf_map_update_elem(&predicates_results_cache, &pred_idx, &result, BPF_ANY) != SUCCESS)
     {
         REPORT_ERROR(GENERIC_ERROR, "bpf_map_update_elem failed");
     }
@@ -99,7 +99,7 @@ statfunc void set_cached_pred_result(unsigned int pred_idx, enum token_result pr
 statfunc int compare_numeric(const struct event_t *current_event, int event_value, struct predicate_t *pred)
 {
     int rule_value = 0;
-    if(pred->fieldref != FIELD_TYPE_NONE)
+    if (pred->fieldref != FIELD_TYPE_NONE)
     {
         rule_value = fieldref_pred_get_numeric_value(current_event, pred->fieldref);
     }
@@ -151,12 +151,12 @@ statfunc struct string_utils_ctx *create_sctx_fieldref(const char *haystack, uns
     }
     
     barrier_var(haystack_max_length);
-    if(bpf_probe_read_kernel(sctx->haystack, haystack_max_length, haystack) != SUCCESS)
+    if (bpf_probe_read_kernel(sctx->haystack, haystack_max_length, haystack) != SUCCESS)
     {
         REPORT_ERROR(GENERIC_ERROR, "bpf_probe_read_kernel failed");
         return NULL;
     }
-    if(fieldref_pred_fill_needle(sctx, pred->fieldref) != TRUE)
+    if (fieldref_pred_fill_needle(sctx, pred->fieldref) != TRUE)
     {
         REPORT_ERROR(GENERIC_ERROR, "fieldref_pred_fill_needle failed");
         return NULL;
@@ -172,7 +172,7 @@ statfunc struct string_utils_ctx *create_sctx_fieldref(const char *haystack, uns
 statfunc int compare_string(const char *haystack, unsigned char haystack_length, unsigned char haystack_max_length, struct predicate_t *pred)
 {
     struct string_utils_ctx *sctx = NULL;
-    if(pred->fieldref != FIELD_TYPE_NONE)
+    if (pred->fieldref != FIELD_TYPE_NONE)
     {
         sctx = create_sctx_fieldref(haystack, haystack_length, haystack_max_length, pred);
     }
@@ -181,7 +181,7 @@ statfunc int compare_string(const char *haystack, unsigned char haystack_length,
         sctx = create_sctx(haystack, haystack_length, haystack_max_length, pred);
     }
 
-    if(!sctx)
+    if (!sctx)
     {
         return FALSE;
     }
@@ -203,19 +203,19 @@ statfunc int compare_string(const char *haystack, unsigned char haystack_length,
 statfunc int eval_ip(const struct network_event_t *event, struct predicate_t *pred)
 {
     struct rule_ip_t *ip = bpf_map_lookup_elem(&rules_ips_map, &pred->numerical_value);
-    if(!ip)
+    if (!ip)
     {
         REPORT_ERROR(GENERIC_ERROR, "ip lookup failed for idx %d", pred->numerical_value);
         return FALSE;
     }
 
-    if(event->ip_type == AF_INET)
+    if (event->ip_type == AF_INET)
     {
-        if(pred->field == NETWORK_SOURCE_IP)
+        if (pred->field == NETWORK_SOURCE_IP)
         {
             return ((event->addresses.ipv4.source_ip & ip->cidr_mask[0]) == (ip->ip[0] & ip->cidr_mask[0]));
         }
-        else if(pred->field == NETWORK_DESTINATION_IP)
+        else if (pred->field == NETWORK_DESTINATION_IP)
         {
             return ((event->addresses.ipv4.destination_ip & ip->cidr_mask[0]) == (ip->ip[0] & ip->cidr_mask[0]));
         }
@@ -225,16 +225,16 @@ statfunc int eval_ip(const struct network_event_t *event, struct predicate_t *pr
             return FALSE;
         }
     }
-    else if(event->ip_type == AF_INET6)
+    else if (event->ip_type == AF_INET6)
     {
-        if(pred->field == NETWORK_SOURCE_IP)
+        if (pred->field == NETWORK_SOURCE_IP)
         {
             return ((event->addresses.ipv6.source_ip[0] & ip->cidr_mask[0]) == (ip->ip[0] & ip->cidr_mask[0])) &&
                    ((event->addresses.ipv6.source_ip[1] & ip->cidr_mask[1]) == (ip->ip[1] & ip->cidr_mask[1])) &&
                    ((event->addresses.ipv6.source_ip[2] & ip->cidr_mask[2]) == (ip->ip[2] & ip->cidr_mask[2])) &&
                    ((event->addresses.ipv6.source_ip[3] & ip->cidr_mask[3]) == (ip->ip[3] & ip->cidr_mask[3]));
         }
-        else if(pred->field == NETWORK_DESTINATION_IP)
+        else if (pred->field == NETWORK_DESTINATION_IP)
         {
             return ((event->addresses.ipv6.destination_ip[0] & ip->cidr_mask[0]) == (ip->ip[0] & ip->cidr_mask[0])) &&
                    ((event->addresses.ipv6.destination_ip[1] & ip->cidr_mask[1]) == (ip->ip[1] & ip->cidr_mask[1])) &&
@@ -251,6 +251,19 @@ statfunc int eval_ip(const struct network_event_t *event, struct predicate_t *pr
     {
         REPORT_ERROR(GENERIC_ERROR, "eval_ip unknown ip type: %d", event->ip_type);
         return FALSE;
+    }
+}
+
+statfunc const struct network_event_t *get_network_event_data(const struct event_t *current_event)
+{
+    switch (current_event->type)
+    {
+        case NETWORK: return &current_event->data.network;
+        case DNS_QUERY: return &current_event->data.dns_query.network;
+        case DNS_RESPONSE: return &current_event->data.dns_response.network;
+        default:
+            REPORT_ERROR(GENERIC_ERROR, "unexpected event type for network data: %d", current_event->type);
+            return NULL;
     }
 }
 
@@ -286,7 +299,7 @@ statfunc int eval_target_process(const struct event_t *current_event, struct pre
 statfunc int eval_pred(unsigned int pred_idx, const struct event_t *current_event)
 {
     struct predicate_t *pred = bpf_map_lookup_elem(&predicates_map, &pred_idx);
-    if(!pred)
+    if (!pred)
     {
         REPORT_ERROR(GENERIC_ERROR, "pred lookup failed for idx %d", pred_idx);
         return FALSE;
@@ -379,11 +392,31 @@ statfunc int eval_pred(unsigned int pred_idx, const struct event_t *current_even
         case RENAME_DESTINATION_FILE_NLINK: return eval_file(current_event, &current_event->data.rename.destination_file, pred, TARGET_FILE_NLINK);
         case RENAME_DESTINATION_FILE_TYPE: return eval_file(current_event, &current_event->data.rename.destination_file, pred, TARGET_FILE_TYPE);
         case CHMOD_REQUESTED_MODE: return compare_numeric(current_event, current_event->data.chmod.requested_mode, pred);
-        case NETWORK_SOURCE_IP: return eval_ip(&current_event->data.network, pred);
-        case NETWORK_DESTINATION_IP: return eval_ip(&current_event->data.network, pred);
-        case NETWORK_SOURCE_PORT: return compare_numeric(current_event, current_event->data.network.source_port, pred);
-        case NETWORK_DESTINATION_PORT: return compare_numeric(current_event, current_event->data.network.destination_port, pred);
-        case NETWORK_DIRECTION: return compare_numeric(current_event, current_event->data.network.direction, pred);
+        case NETWORK_SOURCE_IP:
+        {
+            const struct network_event_t *network_event = get_network_event_data(current_event);
+            return network_event ? eval_ip(network_event, pred) : FALSE;
+        }
+        case NETWORK_DESTINATION_IP:
+        {
+            const struct network_event_t *network_event = get_network_event_data(current_event);
+            return network_event ? eval_ip(network_event, pred) : FALSE;
+        }
+        case NETWORK_SOURCE_PORT:
+        {
+            const struct network_event_t *network_event = get_network_event_data(current_event);
+            return network_event ? compare_numeric(current_event, network_event->source_port, pred) : FALSE;
+        }
+        case NETWORK_DESTINATION_PORT:
+        {
+            const struct network_event_t *network_event = get_network_event_data(current_event);
+            return network_event ? compare_numeric(current_event, network_event->destination_port, pred) : FALSE;
+        }
+        case NETWORK_DIRECTION:
+        {
+            const struct network_event_t *network_event = get_network_event_data(current_event);
+            return network_event ? compare_numeric(current_event, network_event->direction, pred) : FALSE;
+        }
         default:
             REPORT_ERROR(GENERIC_ERROR, "invalid field: %d", pred->field);
             return FALSE;
@@ -394,13 +427,13 @@ statfunc int eval_pred(unsigned int pred_idx, const struct event_t *current_even
 
 statfunc enum token_result get_pred_evaluation(struct token_t *token, const struct event_t *current_event)
 {
-    if(token->result != TOKEN_RESULT_UNKNOWN)
+    if (token->result != TOKEN_RESULT_UNKNOWN)
     {
         return token->result;
     }
 
     enum token_result cached_result = get_cached_pred_result(token->pred_idx, current_event);
-    if(cached_result != TOKEN_RESULT_UNKNOWN)
+    if (cached_result != TOKEN_RESULT_UNKNOWN)
     {
         return cached_result;
     }
@@ -413,7 +446,7 @@ statfunc enum token_result get_pred_evaluation(struct token_t *token, const stru
 
 statfunc int evaluate_rule_against_event(struct rule_t *rule, const struct event_t *event)
 {
-    if(!rule || !event)
+    if (!rule || !event)
     {
         return FALSE;
     }
@@ -434,7 +467,7 @@ statfunc int evaluate_rule_against_event(struct rule_t *rule, const struct event
         }
 
         struct token_t *token = &rule->tokens[i];
-        if(!evaluate_token_against_event(token, stack, event))
+        if (!evaluate_token_against_event(token, stack, event))
         {
             return FALSE;
         }
@@ -460,21 +493,21 @@ statfunc int evaluate_rule_against_event(struct rule_t *rule, const struct event
 static long event_rule_matcher_callback(struct bpf_map *map, const void *key, void *value, void *callback_ctx)
 {
     struct event_t** current_event_p = (struct event_t**)callback_ctx;
-    if(!current_event_p)
+    if (!current_event_p)
     {
         REPORT_ERROR(GENERIC_ERROR, "current_event_p is null");
         return 1; 
     }
 
     struct rule_t* current_rule = (struct rule_t*)value;
-    if(!current_rule)
+    if (!current_rule)
     {
         REPORT_ERROR(GENERIC_ERROR, "current_rule is null");
         return 1;
     }
 
     struct event_t* current_event = *current_event_p;
-    if(!current_event)
+    if (!current_event)
     {
         REPORT_ERROR(GENERIC_ERROR, "current_event is null");
         return 1;
@@ -485,7 +518,7 @@ static long event_rule_matcher_callback(struct bpf_map *map, const void *key, vo
         return 1;
     }
 
-    if(evaluate_rule_against_event(current_rule, current_event) == TRUE)
+    if (evaluate_rule_against_event(current_rule, current_event) == TRUE)
     {
         current_event->action = current_rule->action;
         current_event->matched_rule_id = current_rule->id;

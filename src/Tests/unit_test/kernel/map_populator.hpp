@@ -92,9 +92,9 @@ public:
         owlsm::config::RulesParser parser;
         auto config = parser.parse_json_to_rules_config(j);
 
-        auto organized_rules = owlsm::RulesOrganizer::organize_rules(config.rules);
+        auto organized_rules = owlsm::RulesOrganizer::organizeRules(config.rules);
         owlsm::RulesIntoBpfMaps rules_into_bpf_maps;
-        rules_into_bpf_maps.create_rule_maps_from_organized_rules(
+        rules_into_bpf_maps.createRuleMapsFromOrganizedRules(
             organized_rules,
             config.id_to_string,
             config.id_to_predicate,

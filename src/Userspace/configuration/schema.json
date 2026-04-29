@@ -56,6 +56,15 @@
                     "properties": {
                         "enabled": {
                             "type": "boolean"
+                        },
+                        "events": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "dns": {
+                                    "type": "boolean"
+                                }
+                            }
                         }
                     }
                 },
@@ -323,6 +332,8 @@
                             "UNLINK",
                             "RENAME",
                             "NETWORK",
+                            "DNS_QUERY",
+                            "DNS_RESPONSE",
                             "MKDIR",
                             "RMDIR"
                         ]

@@ -23,14 +23,14 @@ namespace owlsm
         open_opts.sz = sizeof(open_opts);
         open_opts.pin_root_path = globals::SYS_FS_BPF_OWLSM_PATH;
         m_skel = std::shared_ptr<all_bpf>(all_bpf__open_opts(&open_opts), 
-                                          [](all_bpf* skel) { if(skel) all_bpf__destroy(skel); });
+                                          [](all_bpf* skel) { if (skel) all_bpf__destroy(skel); });
         if (!m_skel) 
         {
             throw std::runtime_error("failed to open skeleton. errno: " + std::to_string(errno));
         }
 
         RulesIntoBpfMaps rules_into_bpf_maps;
-        rules_into_bpf_maps.create_rule_maps_from_organized_rules(organized_rules, 
+        rules_into_bpf_maps.createRuleMapsFromOrganizedRules(organized_rules, 
                                                                    owlsm::globals::g_config.rules_config.id_to_string,
                                                                    owlsm::globals::g_config.rules_config.id_to_predicate,
                                                                    owlsm::globals::g_config.rules_config.id_to_ip);
@@ -95,15 +95,15 @@ namespace owlsm
     void ProbeManager::startRingbuffers()
     {
         auto event_ring_buffer_ptr = std::shared_ptr<ring_buffer>(
-            ring_buffer__new(bpf_map__fd(m_skel->maps.rb), handle_event_callback, nullptr, nullptr),
-            [](ring_buffer* rb) { if(rb) ring_buffer__free(rb); });
+            ring_buffer__new(bpf_map__fd(m_skel->maps.rb), handleEventCallback, nullptr, nullptr),
+            [](ring_buffer* rb) { if (rb) ring_buffer__free(rb); });
         if (!event_ring_buffer_ptr)
         {
             throw std::runtime_error("failed to create event ring buffer. errno: " + std::to_string(errno));
         }
         auto error_ring_buffer_ptr = std::shared_ptr<ring_buffer>(
-            ring_buffer__new(bpf_map__fd(m_skel->maps.errors), handle_error_callback, nullptr, nullptr),
-            [](ring_buffer* rb) { if(rb) ring_buffer__free(rb); });
+            ring_buffer__new(bpf_map__fd(m_skel->maps.errors), handleErrorCallback, nullptr, nullptr),
+            [](ring_buffer* rb) { if (rb) ring_buffer__free(rb); });
         if (!error_ring_buffer_ptr)
         {
             throw std::runtime_error("failed to create error ring buffer. errno: " + std::to_string(errno));
@@ -114,7 +114,7 @@ namespace owlsm
     void ProbeManager::saveEbpfAttachTime()
     {
         struct timespec ts;
-        if(clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+        if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
         {
             throw std::runtime_error("clock_gettime. errno " + std::to_string(errno));
         }
@@ -137,7 +137,7 @@ namespace owlsm
     {
         int map_fd = bpf_map__fd(m_skel->maps.program_related_pids);
         int dummy = 1;
-        for(unsigned int pid : excluded_pids)
+        for (unsigned int pid : excluded_pids)
         {
             if (bpf_map_update_elem(map_fd, &pid, &dummy, BPF_ANY) < 0)
             {

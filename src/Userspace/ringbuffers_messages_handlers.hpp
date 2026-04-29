@@ -20,6 +20,8 @@
 #include <string>
 #include <chrono>
 #include <algorithm>
+#include <stdexcept>
+#include <type_traits>
 #include <unistd.h>
 
 namespace owlsm
@@ -154,13 +156,37 @@ private:
 
     void convertToMessages()
     {
-        m_messages_queue.resize(m_thread_queue.size());
-        std::transform(
-            m_thread_queue.begin(),
-            m_thread_queue.end(),
-            m_messages_queue.begin(),
-            [](const RawType& ev) { return std::make_shared<MessageType>(ev); }
-        );
+        m_messages_queue.clear();
+        try
+        {
+            m_messages_queue.reserve(m_thread_queue.size());
+        }
+        catch (const std::exception& e)
+        {
+            LOG_ERROR("Failed reserving messages queue for " << m_thread_queue.size()
+                << " messages: " << e.what());
+            return;
+        }
+
+        for (const auto& ev : m_thread_queue)
+        {
+            try
+            {
+                m_messages_queue.push_back(std::make_shared<MessageType>(ev));
+            }
+            catch (const std::length_error& e)
+            {
+                LOG_ERROR("Dropping message due to length_error during conversion: " << e.what());
+            }
+            catch (const std::exception& e)
+            {
+                LOG_ERROR("Dropping message due to exception during conversion: " << e.what());
+            }
+            catch (...)
+            {
+                LOG_ERROR("Dropping message due to unknown exception during conversion");
+            }
+        }
     }
 
     void enrichMessages()
@@ -168,6 +194,19 @@ private:
         for (auto& msg : m_messages_queue)
         {
             m_sync_enrichment.enrich(msg);
+        }
+
+        if constexpr (std::is_same_v<MessageType, events::Event>)
+        {
+            m_messages_queue.erase(
+                std::remove_if(
+                    m_messages_queue.begin(),
+                    m_messages_queue.end(),
+                    [](const std::shared_ptr<MessageType>& msg)
+                    {
+                        return msg && msg->action == EXCLUDE_EVENT;
+                    }),
+                m_messages_queue.end());
         }
     }
 
@@ -234,8 +273,8 @@ public:
 
     void start(std::shared_ptr<struct ring_buffer>& event_ringbuffer, std::shared_ptr<struct ring_buffer>& error_ringbuffer);
     void destroy();
-    int handle_event(void* ctx, void* data, size_t len);
-    int handle_error(void* ctx, void* data, size_t len);
+    int handleEvent(void* ctx, void* data, size_t len);
+    int handleError(void* ctx, void* data, size_t len);
 
 private:
     std::unique_ptr<EventHandler> m_event_handler = nullptr;
@@ -243,7 +282,7 @@ private:
 };
 
 extern RingbuffersMessagesHandlers g_ringbuffers_messages_handlers;
-int handle_event_callback(void* ctx, void* data, size_t len);
-int handle_error_callback(void* ctx, void* data, size_t len);
+int handleEventCallback(void* ctx, void* data, size_t len);
+int handleErrorCallback(void* ctx, void* data, size_t len);
 
 }

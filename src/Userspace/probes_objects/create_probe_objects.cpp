@@ -5,6 +5,7 @@
 #include "probes_objects/fentry_probe.hpp"
 #include "probes_objects/tracepoint_probe.hpp"
 #include "probes_objects/uprobe_probe.hpp"
+#include "probes_objects/tc_probe.hpp"
 #include "probes_objects/create_probe_objects.hpp"
 #include "globals/global_objects.hpp"
 
@@ -37,17 +38,44 @@ namespace owlsm
 
     void CreateProbeObjects::addFileMonitoringProbes(std::vector<std::shared_ptr<AbstractProbe>>& probes)
     {
-        if(owlsm::globals::g_config.features.file_monitoring.enabled)
+        if (owlsm::globals::g_config.features.file_monitoring.enabled)
         {
-            if(owlsm::globals::g_config.features.file_monitoring.events.chmod) { probes.push_back(std::make_shared<LsmProbe>(CHMOD)); }
-            if(owlsm::globals::g_config.features.file_monitoring.events.chown) { probes.push_back(std::make_shared<LsmProbe>(CHOWN)); }
-            if(owlsm::globals::g_config.features.file_monitoring.events.file_create) { probes.push_back(std::make_shared<LsmProbe>(FILE_CREATE)); }
-            if(owlsm::globals::g_config.features.file_monitoring.events.unlink) { probes.push_back(std::make_shared<LsmProbe>(UNLINK)); }
-            if(owlsm::globals::g_config.features.file_monitoring.events.rename) { probes.push_back(std::make_shared<LsmProbe>(RENAME)); }
-            if(owlsm::globals::g_config.features.file_monitoring.events.write) { probes.push_back(std::make_shared<LsmProbe>(WRITE)); }
-            if(owlsm::globals::g_config.features.file_monitoring.events.read) { probes.push_back(std::make_shared<LsmProbe>(READ)); }
-            if(owlsm::globals::g_config.features.file_monitoring.events.mkdir) { probes.push_back(std::make_shared<LsmProbe>(MKDIR)); }
-            if(owlsm::globals::g_config.features.file_monitoring.events.rmdir) { probes.push_back(std::make_shared<LsmProbe>(RMDIR)); }
+            if (owlsm::globals::g_config.features.file_monitoring.events.chmod)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(CHMOD));
+            }
+            if (owlsm::globals::g_config.features.file_monitoring.events.chown)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(CHOWN));
+            }
+            if (owlsm::globals::g_config.features.file_monitoring.events.file_create)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(FILE_CREATE));
+            }
+            if (owlsm::globals::g_config.features.file_monitoring.events.unlink)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(UNLINK));
+            }
+            if (owlsm::globals::g_config.features.file_monitoring.events.rename)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(RENAME));
+            }
+            if (owlsm::globals::g_config.features.file_monitoring.events.write)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(WRITE));
+            }
+            if (owlsm::globals::g_config.features.file_monitoring.events.read)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(READ));
+            }
+            if (owlsm::globals::g_config.features.file_monitoring.events.mkdir)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(MKDIR));
+            }
+            if (owlsm::globals::g_config.features.file_monitoring.events.rmdir)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(RMDIR));
+            }
         }
 
     }
@@ -57,6 +85,11 @@ namespace owlsm
         if (owlsm::globals::g_config.features.network_monitoring.enabled)
         {
             probes.push_back(std::make_shared<LsmProbe>(NETWORK));
+            if (owlsm::globals::g_config.features.network_monitoring.events.dns)
+            {
+                probes.push_back(std::make_shared<LsmProbe>(DNS_QUERY));
+                probes.push_back(std::make_shared<TcProbe>());
+            }
         }
     }
 

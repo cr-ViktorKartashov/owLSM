@@ -55,6 +55,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Owner, uid, gid)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(File, inode, dev, path, owner, mode, type, suid, sgid, last_modified_seconds, nlink, filename)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Process, pid, ppid, ruid, rgid, euid, egid, suid, cgroup_id, start_time, ptrace_flags, file, cmd, stdio_file_descriptors_at_process_creation, shell_command)
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ExitEventData, exit_code, signal)
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DnsAnswer, type, data_length, ttl, data)
 
 void to_json(nlohmann::json& j, const GenericFileEventData& e)
 {
@@ -129,6 +130,29 @@ void to_json(nlohmann::json& j, const NetworkEventData& e)
             {"protocol", e.protocol},
             {"ip_type", e.ip_type}
         }}
+    };
+}
+
+void to_json(nlohmann::json& j, const DnsQueryEventData& e)
+{
+    to_json(j, e.network);
+    j["dns_query"] = {
+        {"txid", e.txid},
+        {"question", e.question},
+        {"question_type", e.question_type}
+    };
+}
+
+void to_json(nlohmann::json& j, const DnsResponseEventData& e)
+{
+    to_json(j, e.network);
+    j["dns_response"] = {
+        {"txid", e.txid},
+        {"question", e.question},
+        {"question_type", e.question_type},
+        {"answer_count", e.answer_count},
+        {"rcode", e.rcode},
+        {"answers", e.answers}
     };
 }
 

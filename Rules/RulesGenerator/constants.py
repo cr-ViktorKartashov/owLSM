@@ -24,6 +24,8 @@ VALID_EVENT_TYPES: set = {
     "EXEC",
     "RENAME",
     "NETWORK",
+    "DNS_QUERY",
+    "DNS_RESPONSE",
     "MKDIR",
     "RMDIR",
 }

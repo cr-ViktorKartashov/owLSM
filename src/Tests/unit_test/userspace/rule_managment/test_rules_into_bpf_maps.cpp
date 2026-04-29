@@ -14,7 +14,7 @@ public:
     static std::string event_type_to_string(event_type type)
     {
         owlsm::RulesIntoBpfMaps rules_into_bpf_maps;
-        return rules_into_bpf_maps.event_type_to_string(type);
+        return rules_into_bpf_maps.eventTypeToString(type);
     }
 };
 
@@ -110,6 +110,8 @@ TEST_F(RulesIntoBpfMapsTest, event_type_to_string_all_types)
     EXPECT_EQ(RulesIntoBpfMapsTest::event_type_to_string(UNLINK), "unlink_rules");
     EXPECT_EQ(RulesIntoBpfMapsTest::event_type_to_string(RENAME), "rename_rules");
     EXPECT_EQ(RulesIntoBpfMapsTest::event_type_to_string(NETWORK), "network_rules");
+    EXPECT_EQ(RulesIntoBpfMapsTest::event_type_to_string(DNS_QUERY), "dns_query_rules");
+    EXPECT_EQ(RulesIntoBpfMapsTest::event_type_to_string(DNS_RESPONSE), "dns_response_rules");
     EXPECT_EQ(RulesIntoBpfMapsTest::event_type_to_string(MKDIR), "mkdir_rules");
     EXPECT_EQ(RulesIntoBpfMapsTest::event_type_to_string(RMDIR), "rmdir_rules");
 }

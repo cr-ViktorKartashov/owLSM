@@ -44,6 +44,15 @@ struct RenameInfoBuilder;
 struct NetworkInfo;
 struct NetworkInfoBuilder;
 
+struct DnsAnswer;
+struct DnsAnswerBuilder;
+
+struct DnsQueryInfo;
+struct DnsQueryInfoBuilder;
+
+struct DnsResponseInfo;
+struct DnsResponseInfoBuilder;
+
 struct GenericFileEventData;
 struct GenericFileEventDataBuilder;
 
@@ -68,6 +77,12 @@ struct RenameEventDataBuilder;
 struct NetworkEventData;
 struct NetworkEventDataBuilder;
 
+struct DnsQueryEventData;
+struct DnsQueryEventDataBuilder;
+
+struct DnsResponseEventData;
+struct DnsResponseEventDataBuilder;
+
 struct Event;
 struct EventBuilder;
 
@@ -88,11 +103,13 @@ enum class EventType : uint8_t {
   READ = 10,
   RENAME = 11,
   NETWORK = 12,
+  DNS_QUERY = 13,
+  DNS_RESPONSE = 14,
   MIN = EXEC,
-  MAX = NETWORK
+  MAX = DNS_RESPONSE
 };
 
-inline const EventType (&EnumValuesEventType())[13] {
+inline const EventType (&EnumValuesEventType())[15] {
   static const EventType values[] = {
     EventType::EXEC,
     EventType::FORK,
@@ -106,13 +123,15 @@ inline const EventType (&EnumValuesEventType())[13] {
     EventType::WRITE,
     EventType::READ,
     EventType::RENAME,
-    EventType::NETWORK
+    EventType::NETWORK,
+    EventType::DNS_QUERY,
+    EventType::DNS_RESPONSE
   };
   return values;
 }
 
 inline const char * const *EnumNamesEventType() {
-  static const char * const names[14] = {
+  static const char * const names[16] = {
     "EXEC",
     "FORK",
     "EXIT",
@@ -126,13 +145,15 @@ inline const char * const *EnumNamesEventType() {
     "READ",
     "RENAME",
     "NETWORK",
+    "DNS_QUERY",
+    "DNS_RESPONSE",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameEventType(EventType e) {
-  if (::flatbuffers::IsOutRange(e, EventType::EXEC, EventType::NETWORK)) return "";
+  if (::flatbuffers::IsOutRange(e, EventType::EXEC, EventType::DNS_RESPONSE)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesEventType()[index];
 }
@@ -270,11 +291,13 @@ enum class EventData : uint8_t {
   ExitEventData = 6,
   RenameEventData = 7,
   NetworkEventData = 8,
+  DnsQueryEventData = 9,
+  DnsResponseEventData = 10,
   MIN = NONE,
-  MAX = NetworkEventData
+  MAX = DnsResponseEventData
 };
 
-inline const EventData (&EnumValuesEventData())[9] {
+inline const EventData (&EnumValuesEventData())[11] {
   static const EventData values[] = {
     EventData::NONE,
     EventData::GenericFileEventData,
@@ -284,13 +307,15 @@ inline const EventData (&EnumValuesEventData())[9] {
     EventData::ForkEventData,
     EventData::ExitEventData,
     EventData::RenameEventData,
-    EventData::NetworkEventData
+    EventData::NetworkEventData,
+    EventData::DnsQueryEventData,
+    EventData::DnsResponseEventData
   };
   return values;
 }
 
 inline const char * const *EnumNamesEventData() {
-  static const char * const names[10] = {
+  static const char * const names[12] = {
     "NONE",
     "GenericFileEventData",
     "ChownEventData",
@@ -300,13 +325,15 @@ inline const char * const *EnumNamesEventData() {
     "ExitEventData",
     "RenameEventData",
     "NetworkEventData",
+    "DnsQueryEventData",
+    "DnsResponseEventData",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameEventData(EventData e) {
-  if (::flatbuffers::IsOutRange(e, EventData::NONE, EventData::NetworkEventData)) return "";
+  if (::flatbuffers::IsOutRange(e, EventData::NONE, EventData::DnsResponseEventData)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesEventData()[index];
 }
@@ -345,6 +372,14 @@ template<> struct EventDataTraits<owlsm::fb::RenameEventData> {
 
 template<> struct EventDataTraits<owlsm::fb::NetworkEventData> {
   static const EventData enum_value = EventData::NetworkEventData;
+};
+
+template<> struct EventDataTraits<owlsm::fb::DnsQueryEventData> {
+  static const EventData enum_value = EventData::DnsQueryEventData;
+};
+
+template<> struct EventDataTraits<owlsm::fb::DnsResponseEventData> {
+  static const EventData enum_value = EventData::DnsResponseEventData;
 };
 
 template <bool B = false>
@@ -1199,6 +1234,294 @@ inline ::flatbuffers::Offset<NetworkInfo> CreateNetworkInfoDirect(
       ip_type);
 }
 
+struct DnsAnswer FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef DnsAnswerBuilder Builder;
+  static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
+    return "owlsm.fb.DnsAnswer";
+  }
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_TYPE = 4,
+    VT_DATA_LENGTH = 6,
+    VT_TTL = 8,
+    VT_DATA = 10
+  };
+  uint16_t type() const {
+    return GetField<uint16_t>(VT_TYPE, 0);
+  }
+  uint16_t data_length() const {
+    return GetField<uint16_t>(VT_DATA_LENGTH, 0);
+  }
+  uint32_t ttl() const {
+    return GetField<uint32_t>(VT_TTL, 0);
+  }
+  const ::flatbuffers::String *data() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_DATA);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_TYPE, 2) &&
+           VerifyField<uint16_t>(verifier, VT_DATA_LENGTH, 2) &&
+           VerifyField<uint32_t>(verifier, VT_TTL, 4) &&
+           VerifyOffset(verifier, VT_DATA) &&
+           verifier.VerifyString(data()) &&
+           verifier.EndTable();
+  }
+};
+
+struct DnsAnswerBuilder {
+  typedef DnsAnswer Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_type(uint16_t type) {
+    fbb_.AddElement<uint16_t>(DnsAnswer::VT_TYPE, type, 0);
+  }
+  void add_data_length(uint16_t data_length) {
+    fbb_.AddElement<uint16_t>(DnsAnswer::VT_DATA_LENGTH, data_length, 0);
+  }
+  void add_ttl(uint32_t ttl) {
+    fbb_.AddElement<uint32_t>(DnsAnswer::VT_TTL, ttl, 0);
+  }
+  void add_data(::flatbuffers::Offset<::flatbuffers::String> data) {
+    fbb_.AddOffset(DnsAnswer::VT_DATA, data);
+  }
+  explicit DnsAnswerBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<DnsAnswer> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<DnsAnswer>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<DnsAnswer> CreateDnsAnswer(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t type = 0,
+    uint16_t data_length = 0,
+    uint32_t ttl = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> data = 0) {
+  DnsAnswerBuilder builder_(_fbb);
+  builder_.add_data(data);
+  builder_.add_ttl(ttl);
+  builder_.add_data_length(data_length);
+  builder_.add_type(type);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<DnsAnswer> CreateDnsAnswerDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t type = 0,
+    uint16_t data_length = 0,
+    uint32_t ttl = 0,
+    const char *data = nullptr) {
+  auto data__ = data ? _fbb.CreateString(data) : 0;
+  return owlsm::fb::CreateDnsAnswer(
+      _fbb,
+      type,
+      data_length,
+      ttl,
+      data__);
+}
+
+struct DnsQueryInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef DnsQueryInfoBuilder Builder;
+  static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
+    return "owlsm.fb.DnsQueryInfo";
+  }
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_TXID = 4,
+    VT_QUESTION = 6,
+    VT_QUESTION_TYPE = 8
+  };
+  uint16_t txid() const {
+    return GetField<uint16_t>(VT_TXID, 0);
+  }
+  const ::flatbuffers::String *question() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_QUESTION);
+  }
+  uint16_t question_type() const {
+    return GetField<uint16_t>(VT_QUESTION_TYPE, 0);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_TXID, 2) &&
+           VerifyOffset(verifier, VT_QUESTION) &&
+           verifier.VerifyString(question()) &&
+           VerifyField<uint16_t>(verifier, VT_QUESTION_TYPE, 2) &&
+           verifier.EndTable();
+  }
+};
+
+struct DnsQueryInfoBuilder {
+  typedef DnsQueryInfo Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_txid(uint16_t txid) {
+    fbb_.AddElement<uint16_t>(DnsQueryInfo::VT_TXID, txid, 0);
+  }
+  void add_question(::flatbuffers::Offset<::flatbuffers::String> question) {
+    fbb_.AddOffset(DnsQueryInfo::VT_QUESTION, question);
+  }
+  void add_question_type(uint16_t question_type) {
+    fbb_.AddElement<uint16_t>(DnsQueryInfo::VT_QUESTION_TYPE, question_type, 0);
+  }
+  explicit DnsQueryInfoBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<DnsQueryInfo> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<DnsQueryInfo>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<DnsQueryInfo> CreateDnsQueryInfo(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t txid = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> question = 0,
+    uint16_t question_type = 0) {
+  DnsQueryInfoBuilder builder_(_fbb);
+  builder_.add_question(question);
+  builder_.add_question_type(question_type);
+  builder_.add_txid(txid);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<DnsQueryInfo> CreateDnsQueryInfoDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t txid = 0,
+    const char *question = nullptr,
+    uint16_t question_type = 0) {
+  auto question__ = question ? _fbb.CreateString(question) : 0;
+  return owlsm::fb::CreateDnsQueryInfo(
+      _fbb,
+      txid,
+      question__,
+      question_type);
+}
+
+struct DnsResponseInfo FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef DnsResponseInfoBuilder Builder;
+  static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
+    return "owlsm.fb.DnsResponseInfo";
+  }
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_TXID = 4,
+    VT_QUESTION = 6,
+    VT_QUESTION_TYPE = 8,
+    VT_ANSWER_COUNT = 10,
+    VT_RCODE = 12,
+    VT_ANSWERS = 14
+  };
+  uint16_t txid() const {
+    return GetField<uint16_t>(VT_TXID, 0);
+  }
+  const ::flatbuffers::String *question() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_QUESTION);
+  }
+  uint16_t question_type() const {
+    return GetField<uint16_t>(VT_QUESTION_TYPE, 0);
+  }
+  uint16_t answer_count() const {
+    return GetField<uint16_t>(VT_ANSWER_COUNT, 0);
+  }
+  uint8_t rcode() const {
+    return GetField<uint8_t>(VT_RCODE, 0);
+  }
+  const ::flatbuffers::Vector<::flatbuffers::Offset<owlsm::fb::DnsAnswer>> *answers() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<owlsm::fb::DnsAnswer>> *>(VT_ANSWERS);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint16_t>(verifier, VT_TXID, 2) &&
+           VerifyOffset(verifier, VT_QUESTION) &&
+           verifier.VerifyString(question()) &&
+           VerifyField<uint16_t>(verifier, VT_QUESTION_TYPE, 2) &&
+           VerifyField<uint16_t>(verifier, VT_ANSWER_COUNT, 2) &&
+           VerifyField<uint8_t>(verifier, VT_RCODE, 1) &&
+           VerifyOffset(verifier, VT_ANSWERS) &&
+           verifier.VerifyVector(answers()) &&
+           verifier.VerifyVectorOfTables(answers()) &&
+           verifier.EndTable();
+  }
+};
+
+struct DnsResponseInfoBuilder {
+  typedef DnsResponseInfo Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_txid(uint16_t txid) {
+    fbb_.AddElement<uint16_t>(DnsResponseInfo::VT_TXID, txid, 0);
+  }
+  void add_question(::flatbuffers::Offset<::flatbuffers::String> question) {
+    fbb_.AddOffset(DnsResponseInfo::VT_QUESTION, question);
+  }
+  void add_question_type(uint16_t question_type) {
+    fbb_.AddElement<uint16_t>(DnsResponseInfo::VT_QUESTION_TYPE, question_type, 0);
+  }
+  void add_answer_count(uint16_t answer_count) {
+    fbb_.AddElement<uint16_t>(DnsResponseInfo::VT_ANSWER_COUNT, answer_count, 0);
+  }
+  void add_rcode(uint8_t rcode) {
+    fbb_.AddElement<uint8_t>(DnsResponseInfo::VT_RCODE, rcode, 0);
+  }
+  void add_answers(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<owlsm::fb::DnsAnswer>>> answers) {
+    fbb_.AddOffset(DnsResponseInfo::VT_ANSWERS, answers);
+  }
+  explicit DnsResponseInfoBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<DnsResponseInfo> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<DnsResponseInfo>(end);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<DnsResponseInfo> CreateDnsResponseInfo(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t txid = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> question = 0,
+    uint16_t question_type = 0,
+    uint16_t answer_count = 0,
+    uint8_t rcode = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<owlsm::fb::DnsAnswer>>> answers = 0) {
+  DnsResponseInfoBuilder builder_(_fbb);
+  builder_.add_answers(answers);
+  builder_.add_question(question);
+  builder_.add_answer_count(answer_count);
+  builder_.add_question_type(question_type);
+  builder_.add_txid(txid);
+  builder_.add_rcode(rcode);
+  return builder_.Finish();
+}
+
+inline ::flatbuffers::Offset<DnsResponseInfo> CreateDnsResponseInfoDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    uint16_t txid = 0,
+    const char *question = nullptr,
+    uint16_t question_type = 0,
+    uint16_t answer_count = 0,
+    uint8_t rcode = 0,
+    const std::vector<::flatbuffers::Offset<owlsm::fb::DnsAnswer>> *answers = nullptr) {
+  auto question__ = question ? _fbb.CreateString(question) : 0;
+  auto answers__ = answers ? _fbb.CreateVector<::flatbuffers::Offset<owlsm::fb::DnsAnswer>>(*answers) : 0;
+  return owlsm::fb::CreateDnsResponseInfo(
+      _fbb,
+      txid,
+      question__,
+      question_type,
+      answer_count,
+      rcode,
+      answers__);
+}
+
 struct GenericFileEventData FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef GenericFileEventDataBuilder Builder;
   static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
@@ -1603,6 +1926,124 @@ inline ::flatbuffers::Offset<NetworkEventData> CreateNetworkEventData(
   return builder_.Finish();
 }
 
+struct DnsQueryEventData FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef DnsQueryEventDataBuilder Builder;
+  static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
+    return "owlsm.fb.DnsQueryEventData";
+  }
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NETWORK = 4,
+    VT_DNS_QUERY = 6
+  };
+  const owlsm::fb::NetworkInfo *network() const {
+    return GetPointer<const owlsm::fb::NetworkInfo *>(VT_NETWORK);
+  }
+  const owlsm::fb::DnsQueryInfo *dns_query() const {
+    return GetPointer<const owlsm::fb::DnsQueryInfo *>(VT_DNS_QUERY);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffsetRequired(verifier, VT_NETWORK) &&
+           verifier.VerifyTable(network()) &&
+           VerifyOffsetRequired(verifier, VT_DNS_QUERY) &&
+           verifier.VerifyTable(dns_query()) &&
+           verifier.EndTable();
+  }
+};
+
+struct DnsQueryEventDataBuilder {
+  typedef DnsQueryEventData Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_network(::flatbuffers::Offset<owlsm::fb::NetworkInfo> network) {
+    fbb_.AddOffset(DnsQueryEventData::VT_NETWORK, network);
+  }
+  void add_dns_query(::flatbuffers::Offset<owlsm::fb::DnsQueryInfo> dns_query) {
+    fbb_.AddOffset(DnsQueryEventData::VT_DNS_QUERY, dns_query);
+  }
+  explicit DnsQueryEventDataBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<DnsQueryEventData> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<DnsQueryEventData>(end);
+    fbb_.Required(o, DnsQueryEventData::VT_NETWORK);
+    fbb_.Required(o, DnsQueryEventData::VT_DNS_QUERY);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<DnsQueryEventData> CreateDnsQueryEventData(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<owlsm::fb::NetworkInfo> network = 0,
+    ::flatbuffers::Offset<owlsm::fb::DnsQueryInfo> dns_query = 0) {
+  DnsQueryEventDataBuilder builder_(_fbb);
+  builder_.add_dns_query(dns_query);
+  builder_.add_network(network);
+  return builder_.Finish();
+}
+
+struct DnsResponseEventData FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
+  typedef DnsResponseEventDataBuilder Builder;
+  static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
+    return "owlsm.fb.DnsResponseEventData";
+  }
+  enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
+    VT_NETWORK = 4,
+    VT_DNS_RESPONSE = 6
+  };
+  const owlsm::fb::NetworkInfo *network() const {
+    return GetPointer<const owlsm::fb::NetworkInfo *>(VT_NETWORK);
+  }
+  const owlsm::fb::DnsResponseInfo *dns_response() const {
+    return GetPointer<const owlsm::fb::DnsResponseInfo *>(VT_DNS_RESPONSE);
+  }
+  template <bool B = false>
+  bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyOffsetRequired(verifier, VT_NETWORK) &&
+           verifier.VerifyTable(network()) &&
+           VerifyOffsetRequired(verifier, VT_DNS_RESPONSE) &&
+           verifier.VerifyTable(dns_response()) &&
+           verifier.EndTable();
+  }
+};
+
+struct DnsResponseEventDataBuilder {
+  typedef DnsResponseEventData Table;
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_network(::flatbuffers::Offset<owlsm::fb::NetworkInfo> network) {
+    fbb_.AddOffset(DnsResponseEventData::VT_NETWORK, network);
+  }
+  void add_dns_response(::flatbuffers::Offset<owlsm::fb::DnsResponseInfo> dns_response) {
+    fbb_.AddOffset(DnsResponseEventData::VT_DNS_RESPONSE, dns_response);
+  }
+  explicit DnsResponseEventDataBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
+        : fbb_(_fbb) {
+    start_ = fbb_.StartTable();
+  }
+  ::flatbuffers::Offset<DnsResponseEventData> Finish() {
+    const auto end = fbb_.EndTable(start_);
+    auto o = ::flatbuffers::Offset<DnsResponseEventData>(end);
+    fbb_.Required(o, DnsResponseEventData::VT_NETWORK);
+    fbb_.Required(o, DnsResponseEventData::VT_DNS_RESPONSE);
+    return o;
+  }
+};
+
+inline ::flatbuffers::Offset<DnsResponseEventData> CreateDnsResponseEventData(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<owlsm::fb::NetworkInfo> network = 0,
+    ::flatbuffers::Offset<owlsm::fb::DnsResponseInfo> dns_response = 0) {
+  DnsResponseEventDataBuilder builder_(_fbb);
+  builder_.add_dns_response(dns_response);
+  builder_.add_network(network);
+  return builder_.Finish();
+}
+
 struct Event FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef EventBuilder Builder;
   static FLATBUFFERS_CONSTEXPR_CPP11 const char *GetFullyQualifiedName() {
@@ -1679,6 +2120,12 @@ struct Event FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   const owlsm::fb::NetworkEventData *data_as_NetworkEventData() const {
     return data_type() == owlsm::fb::EventData::NetworkEventData ? static_cast<const owlsm::fb::NetworkEventData *>(data()) : nullptr;
   }
+  const owlsm::fb::DnsQueryEventData *data_as_DnsQueryEventData() const {
+    return data_type() == owlsm::fb::EventData::DnsQueryEventData ? static_cast<const owlsm::fb::DnsQueryEventData *>(data()) : nullptr;
+  }
+  const owlsm::fb::DnsResponseEventData *data_as_DnsResponseEventData() const {
+    return data_type() == owlsm::fb::EventData::DnsResponseEventData ? static_cast<const owlsm::fb::DnsResponseEventData *>(data()) : nullptr;
+  }
   template <bool B = false>
   bool Verify(::flatbuffers::VerifierTemplate<B> &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -1731,6 +2178,14 @@ template<> inline const owlsm::fb::RenameEventData *Event::data_as<owlsm::fb::Re
 
 template<> inline const owlsm::fb::NetworkEventData *Event::data_as<owlsm::fb::NetworkEventData>() const {
   return data_as_NetworkEventData();
+}
+
+template<> inline const owlsm::fb::DnsQueryEventData *Event::data_as<owlsm::fb::DnsQueryEventData>() const {
+  return data_as_DnsQueryEventData();
+}
+
+template<> inline const owlsm::fb::DnsResponseEventData *Event::data_as<owlsm::fb::DnsResponseEventData>() const {
+  return data_as_DnsResponseEventData();
 }
 
 struct EventBuilder {
@@ -1944,6 +2399,14 @@ inline bool VerifyEventData(::flatbuffers::VerifierTemplate<B> &verifier, const 
     }
     case EventData::NetworkEventData: {
       auto ptr = reinterpret_cast<const owlsm::fb::NetworkEventData *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case EventData::DnsQueryEventData: {
+      auto ptr = reinterpret_cast<const owlsm::fb::DnsQueryEventData *>(obj);
+      return verifier.VerifyTable(ptr);
+    }
+    case EventData::DnsResponseEventData: {
+      auto ptr = reinterpret_cast<const owlsm::fb::DnsResponseEventData *>(obj);
       return verifier.VerifyTable(ptr);
     }
     default: return true;

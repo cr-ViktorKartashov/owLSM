@@ -10,7 +10,7 @@ statfunc int get_current_and_increment_tail_counter()
 {
     u32 idx = 0;
     u32 *p = bpf_map_lookup_elem(&tail_call_counter, &idx);
-    if(!p)
+    if (!p)
     {
         REPORT_ERROR(GENERIC_ERROR, "bpf_map_lookup_elem failed");
         return GENERIC_ERROR;
@@ -236,12 +236,12 @@ struct {
 statfunc void do_tail_call(void* ctx, void* prog_array)
 {
     int hops = get_current_and_increment_tail_counter();
-    if(hops == GENERIC_ERROR)
+    if (hops == GENERIC_ERROR)
     {
         return;
     }
 
-    if(hops < MAX_TAIL_CALL_CNT)
+    if (hops < MAX_TAIL_CALL_CNT)
     {
         bpf_tail_call(ctx, prog_array, 0);
         REPORT_ERROR(GENERIC_ERROR, "bpf_tail_call failed. hops: %d", hops);
@@ -251,7 +251,7 @@ statfunc void do_tail_call(void* ctx, void* prog_array)
 statfunc int store_currently_handled_event(struct event_t* e)
 {
     u32 key = 0;
-    if(bpf_map_update_elem(&currently_handled_event, &key, e, BPF_ANY) != SUCCESS)
+    if (bpf_map_update_elem(&currently_handled_event, &key, e, BPF_ANY) != SUCCESS)
     {
         REPORT_ERROR(GENERIC_ERROR, "bpf_map_update_elem failed");
         return GENERIC_ERROR;
@@ -262,13 +262,13 @@ statfunc int store_currently_handled_event(struct event_t* e)
 statfunc void submit_event_to_userspace(struct event_t* event)
 {
     struct event_t *event_to_send = allocate_empty_event();
-    if(!event_to_send)
+    if (!event_to_send)
     {
         REPORT_ERROR(GENERIC_ERROR, "bpf_ringbuf_reserve failed");
     }
     else 
     {
-        if(bpf_probe_read_kernel(event_to_send, sizeof(*event_to_send), event) != SUCCESS)
+        if (bpf_probe_read_kernel(event_to_send, sizeof(*event_to_send), event) != SUCCESS)
         {
             REPORT_ERROR(GENERIC_ERROR, "bpf_probe_read_kernel failed. event.id: %u", event->id);
             bpf_ringbuf_discard(event_to_send, 0);
@@ -282,7 +282,7 @@ statfunc void submit_event_to_userspace(struct event_t* event)
 
 statfunc void submit_event(struct event_t* event)
 {
-    if(event->action != EXCLUDE_EVENT)
+    if (event->action != EXCLUDE_EVENT)
     {
         submit_event_to_userspace(event);
     }
@@ -291,7 +291,7 @@ statfunc void submit_event(struct event_t* event)
 statfunc int generic_tail_call()
 {
     struct event_t* current_event = get_currently_handled_event();
-    if(!current_event)
+    if (!current_event)
     {
         REPORT_ERROR(GENERIC_ERROR, "get_currently_handled_event failed");
         goto allow_event;
@@ -319,19 +319,23 @@ statfunc int generic_tail_call()
     bpf_for_each_map_elem(&rename_rules, event_rule_matcher_callback, &current_event, 0);
 #elif defined NETWORK_EVENT
     bpf_for_each_map_elem(&network_rules, event_rule_matcher_callback, &current_event, 0);
+#elif defined DNS_QUERY_EVENT
+    bpf_for_each_map_elem(&dns_query_rules, event_rule_matcher_callback, &current_event, 0);
+#elif defined DNS_RESPONSE_EVENT
+    bpf_for_each_map_elem(&dns_response_rules, event_rule_matcher_callback, &current_event, 0);
 #endif
     
-    if(current_event->id > 0)
+    if (current_event->id > 0)
     {
         submit_event(current_event);
     }
 
-    if(current_event->action == KILL_PROCESS || current_event->action == BLOCK_KILL_PROCESS || current_event->action == BLOCK_KILL_PROCESS_KILL_PARENT)
+    if (current_event->action == KILL_PROCESS || current_event->action == BLOCK_KILL_PROCESS || current_event->action == BLOCK_KILL_PROCESS_KILL_PARENT)
     {
         kill_proccesses(current_event->action, current_event);
     }
 
-    if(current_event->action == BLOCK_EVENT || current_event->action == BLOCK_KILL_PROCESS || current_event->action == BLOCK_KILL_PROCESS_KILL_PARENT)
+    if (current_event->action == BLOCK_EVENT || current_event->action == BLOCK_KILL_PROCESS || current_event->action == BLOCK_KILL_PROCESS_KILL_PARENT)
     {
         return DENY;
     }
@@ -346,7 +350,7 @@ statfunc void discard_sk_from_sk_storage(struct sock *sk, void* sk_storage)
     {
         REPORT_ERROR(GENERIC_ERROR, "sk is null");
     }
-    else if(bpf_sk_storage_delete(sk_storage, sk) != SUCCESS)
+    else if (bpf_sk_storage_delete(sk_storage, sk) != SUCCESS)
     {
         REPORT_ERROR(GENERIC_ERROR, "bpf_sk_storage_delete failed, sk: %p", sk);
     }
@@ -354,7 +358,7 @@ statfunc void discard_sk_from_sk_storage(struct sock *sk, void* sk_storage)
 
 statfunc void set_event_id_when_id_is_zero(struct event_t *event)
 {
-    if(event->id != 0)
+    if (event->id != 0)
     {
         REPORT_ERROR(GENERIC_ERROR, "event->id is not 0");
     }
@@ -368,7 +372,7 @@ statfunc int network_event_tcp_outgoing_tail_call(struct sock *sk, void* sk_stor
 {
     int ret = ALLOW;
     struct event_t *event = get_currently_handled_event();
-    if(!event)
+    if (!event)
     {   
         REPORT_ERROR(GENERIC_ERROR, "get_currently_handled_event failed");
         goto discard_sk_storage;
@@ -376,7 +380,7 @@ statfunc int network_event_tcp_outgoing_tail_call(struct sock *sk, void* sk_stor
     
     event->time = bpf_ktime_get_ns();
     ret = generic_tail_call();
-    if(ret == ALLOW)
+    if (ret == ALLOW)
     {
         return ALLOW;  // inet_conn_established needs to add the local ip and port.
     }
@@ -395,7 +399,7 @@ statfunc int network_event_tcp_incoming_tail_call(struct sock *sk, void* sk_stor
 {
     int ret = ALLOW;
     struct event_t *event = get_currently_handled_event();
-    if(!event)
+    if (!event)
     {   
         REPORT_ERROR(GENERIC_ERROR, "get_currently_handled_event failed");
         goto discard_sk_storage;

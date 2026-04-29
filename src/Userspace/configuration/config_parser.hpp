@@ -19,7 +19,7 @@ public:
     ConfigParser& operator=(ConfigParser&&) = delete;
 
     const Config& getConfig() const { return m_config; }
-    void ClearRules() { m_config.rules_config.clear(); }
+    void clearRules() { m_config.rules_config.clear(); }
 
 private:
     nlohmann::json createJsonObject(const std::string& json_str);
@@ -29,6 +29,7 @@ private:
     void fromJson(const nlohmann::json& j, FileMonitoringConfig& o);
     void fromJson(const nlohmann::json& j, FileMonitoringEventsConfig& o);
     void fromJson(const nlohmann::json& j, NetworkMonitoringConfig& o);
+    void fromJson(const nlohmann::json& j, NetworkMonitoringEventsConfig& o);
     void fromJson(const nlohmann::json& j, ShellCommandsMonitoringConfig& o);
     void fromJson(const nlohmann::json& j, UserspaceConfig& o);
     void fromJson(const nlohmann::json& j, KernelConfig& o);

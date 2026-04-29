@@ -19,7 +19,9 @@ enum EventType : ubyte {
     WRITE,
     READ,
     RENAME,
-    NETWORK
+    NETWORK,
+    DNS_QUERY,
+    DNS_RESPONSE
 }
 
 enum Action : ubyte {
@@ -134,6 +136,28 @@ table NetworkInfo {
     ip_type:ubyte;
 }
 
+table DnsAnswer {
+    type:uint16;
+    data_length:uint16;
+    ttl:uint32;
+    data:string;
+}
+
+table DnsQueryInfo {
+    txid:uint16;
+    question:string;
+    question_type:uint16;
+}
+
+table DnsResponseInfo {
+    txid:uint16;
+    question:string;
+    question_type:uint16;
+    answer_count:uint16;
+    rcode:ubyte;
+    answers:[DnsAnswer];
+}
+
 // ── Event-specific data tables ───────────────────────────────
 // These match the JSON output structure in event_to_json.cpp
 
@@ -190,6 +214,16 @@ table NetworkEventData {
     network:NetworkInfo (required);
 }
 
+table DnsQueryEventData {
+    network:NetworkInfo (required);
+    dns_query:DnsQueryInfo (required);
+}
+
+table DnsResponseEventData {
+    network:NetworkInfo (required);
+    dns_response:DnsResponseInfo (required);
+}
+
 union EventData {
     GenericFileEventData,
     ChownEventData,
@@ -198,7 +232,9 @@ union EventData {
     ForkEventData,
     ExitEventData,
     RenameEventData,
-    NetworkEventData
+    NetworkEventData,
+    DnsQueryEventData,
+    DnsResponseEventData
 }
 
 // ── Root tables ──────────────────────────────────────────────

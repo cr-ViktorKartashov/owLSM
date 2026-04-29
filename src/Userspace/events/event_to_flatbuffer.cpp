@@ -103,6 +103,8 @@ fb::EventType EventToFlatbuffer<MessageType>::toFbEventType(event_type et)
         case READ:        return fb::EventType::READ;
         case RENAME:      return fb::EventType::RENAME;
         case NETWORK:     return fb::EventType::NETWORK;
+        case DNS_QUERY:   return fb::EventType::DNS_QUERY;
+        case DNS_RESPONSE:return fb::EventType::DNS_RESPONSE;
         default:          return fb::EventType::EXEC;
     }
 }
@@ -261,6 +263,78 @@ void EventToFlatbuffer<MessageType>::serializeEvent(const Event& ev)
                 d.protocol, d.ip_type);
             data_type = fb::EventData::NetworkEventData;
             data_off = fb::CreateNetworkEventData(m_builder, network_info_off).Union();
+        }
+        else if constexpr (std::is_same_v<T, DnsQueryEventData>)
+        {
+            std::string src_ip, dst_ip;
+            if (d.network.ip_type == AF_INET)
+            {
+                const auto& ipv4 = std::get<Ipv4Addresses>(d.network.addresses);
+                src_ip = ipv4ToString(ipv4.source_ip);
+                dst_ip = ipv4ToString(ipv4.destination_ip);
+            }
+            else
+            {
+                const auto& ipv6 = std::get<Ipv6Addresses>(d.network.addresses);
+                src_ip = ipv6ToString(ipv6.source_ip);
+                dst_ip = ipv6ToString(ipv6.destination_ip);
+            }
+
+            auto direction = (d.network.direction == INCOMING)
+                ? fb::ConnectionDirection::INCOMING
+                : fb::ConnectionDirection::OUTGOING;
+
+            auto src_ip_off = m_builder.CreateString(src_ip);
+            auto dst_ip_off = m_builder.CreateString(dst_ip);
+            auto network_info_off = fb::CreateNetworkInfo(m_builder, direction,
+                src_ip_off, dst_ip_off, d.network.source_port, d.network.destination_port,
+                d.network.protocol, d.network.ip_type);
+            auto question_off = m_builder.CreateString(d.question);
+            auto dns_query_info_off = fb::CreateDnsQueryInfo(m_builder,
+                d.txid, question_off, d.question_type);
+            data_type = fb::EventData::DnsQueryEventData;
+            data_off = fb::CreateDnsQueryEventData(m_builder, network_info_off, dns_query_info_off).Union();
+        }
+        else if constexpr (std::is_same_v<T, DnsResponseEventData>)
+        {
+            std::string src_ip, dst_ip;
+            if (d.network.ip_type == AF_INET)
+            {
+                const auto& ipv4 = std::get<Ipv4Addresses>(d.network.addresses);
+                src_ip = ipv4ToString(ipv4.source_ip);
+                dst_ip = ipv4ToString(ipv4.destination_ip);
+            }
+            else
+            {
+                const auto& ipv6 = std::get<Ipv6Addresses>(d.network.addresses);
+                src_ip = ipv6ToString(ipv6.source_ip);
+                dst_ip = ipv6ToString(ipv6.destination_ip);
+            }
+
+            auto direction = (d.network.direction == INCOMING)
+                ? fb::ConnectionDirection::INCOMING
+                : fb::ConnectionDirection::OUTGOING;
+
+            auto src_ip_off = m_builder.CreateString(src_ip);
+            auto dst_ip_off = m_builder.CreateString(dst_ip);
+            auto network_info_off = fb::CreateNetworkInfo(m_builder, direction,
+                src_ip_off, dst_ip_off, d.network.source_port, d.network.destination_port,
+                d.network.protocol, d.network.ip_type);
+
+            std::vector<flatbuffers::Offset<fb::DnsAnswer>> answer_offsets;
+            answer_offsets.reserve(d.answers.size());
+            for (const auto &answer : d.answers)
+            {
+                auto answer_data_off = m_builder.CreateString(answer.data);
+                answer_offsets.push_back(fb::CreateDnsAnswer(m_builder,
+                    answer.type, answer.data_length, answer.ttl, answer_data_off));
+            }
+            auto answers_vector_off = m_builder.CreateVector(answer_offsets);
+            auto question_off = m_builder.CreateString(d.question);
+            auto dns_response_info_off = fb::CreateDnsResponseInfo(m_builder,
+                d.txid, question_off, d.question_type, d.answer_count, d.rcode, answers_vector_off);
+            data_type = fb::EventData::DnsResponseEventData;
+            data_off = fb::CreateDnsResponseEventData(m_builder, network_info_off, dns_response_info_off).Union();
         }
     }, ev.data);
 

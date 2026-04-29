@@ -47,11 +47,21 @@ namespace owlsm::config {
 
     void ConfigParser::parseJsonToConfigObject(const nlohmann::json& j)
     {
-        if (auto it = j.find("features"); it != j.end())  { fromJson(*it, m_config.features); }
-        if (auto it = j.find("userspace"); it != j.end()) { fromJson(*it, m_config.userspace); }
-        if (auto it = j.find("kernel"); it != j.end())    { fromJson(*it, m_config.kernel); }
+        if (auto it = j.find("features"); it != j.end())
+        {
+            fromJson(*it, m_config.features);
+        }
+        if (auto it = j.find("userspace"); it != j.end())
+        {
+            fromJson(*it, m_config.userspace);
+        }
+        if (auto it = j.find("kernel"); it != j.end())
+        {
+            fromJson(*it, m_config.kernel);
+        }
 
-        if (auto it = j.find("rules"); it != j.end() && it->is_object()) {
+        if (auto it = j.find("rules"); it != j.end() && it->is_object())
+        {
             RulesParser rules_parser;
             m_config.rules_config = rules_parser.parse_json_to_rules_config(*it);
         }
@@ -59,14 +69,32 @@ namespace owlsm::config {
 
     void ConfigParser::fromJson(const nlohmann::json& j, FeaturesConfig& o)
     {
-        if (auto it = j.find("file_monitoring"); it != j.end()) { fromJson(*it, o.file_monitoring); }
-        if (auto it = j.find("network_monitoring"); it != j.end()) { fromJson(*it, o.network_monitoring); }
-        if (auto it = j.find("shell_commands_monitoring"); it != j.end()) { fromJson(*it, o.shell_commands_monitoring); }
+        if (auto it = j.find("file_monitoring"); it != j.end())
+        {
+            fromJson(*it, o.file_monitoring);
+        }
+        if (auto it = j.find("network_monitoring"); it != j.end())
+        {
+            fromJson(*it, o.network_monitoring);
+        }
+        if (auto it = j.find("shell_commands_monitoring"); it != j.end())
+        {
+            fromJson(*it, o.shell_commands_monitoring);
+        }
     }
 
     void ConfigParser::fromJson(const nlohmann::json& j, NetworkMonitoringConfig& o)
     {
         get_if_present(j, "enabled", o.enabled);
+        if (auto it = j.find("events"); it != j.end())
+        {
+            fromJson(*it, o.events);
+        }
+    }
+
+    void ConfigParser::fromJson(const nlohmann::json& j, NetworkMonitoringEventsConfig& o)
+    {
+        get_if_present(j, "dns", o.dns);
     }
 
     void ConfigParser::fromJson(const nlohmann::json& j, ShellCommandsMonitoringConfig& o)
@@ -77,7 +105,10 @@ namespace owlsm::config {
     void ConfigParser::fromJson(const nlohmann::json& j, FileMonitoringConfig& o)
     {
         get_if_present(j, "enabled", o.enabled);
-        if (auto it = j.find("events"); it != j.end()) { fromJson(*it, o.events); }
+        if (auto it = j.find("events"); it != j.end())
+        {
+            fromJson(*it, o.events);
+        }
     }
 
     void ConfigParser::fromJson(const nlohmann::json& j, FileMonitoringEventsConfig& o)
@@ -97,12 +128,21 @@ namespace owlsm::config {
     {
         get_if_present(j, "max_events_queue_size", o.max_events_queue_size);
         get_if_present(j, "set_limits", o.set_limits);
-        if (auto it = j.find("output_type"); it != j.end()) {o.output_type = get_enum<OutputType>(*it);}
-        if (auto it = j.find("log_level"); it != j.end()) {o.log_level = get_enum<log_level>(*it);}
+        if (auto it = j.find("output_type"); it != j.end())
+        {
+            o.output_type = get_enum<OutputType>(*it);
+        }
+        if (auto it = j.find("log_level"); it != j.end())
+        {
+            o.log_level = get_enum<log_level>(*it);
+        }
     }
 
     void ConfigParser::fromJson(const nlohmann::json& j, KernelConfig& o)
     {
-        if (auto it = j.find("log_level"); it != j.end()) {o.log_level = get_enum<log_level>(*it);}
+        if (auto it = j.find("log_level"); it != j.end())
+        {
+            o.log_level = get_enum<log_level>(*it);
+        }
     }
 }

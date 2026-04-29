@@ -75,14 +75,14 @@ void setup(int argc, char *argv[])
     {
         owlsm::config::ConfigParser config_parser(config_str, schema_str);
         owlsm::globals::g_config = config_parser.getConfig();
-        config_parser.ClearRules();
+        config_parser.clearRules();
         explicit_bzero(config_str.data(), config_str.size());
         config_str.clear();
     }
     owlsm::Logger::getInstance().setLogLevel(owlsm::globals::g_config.userspace.log_level);
 
-    owlsm::RulesOrganizer::add_end_rules(owlsm::globals::g_config.rules_config.rules);
-    auto organized_rules = owlsm::RulesOrganizer::organize_rules(owlsm::globals::g_config.rules_config.rules);
+    owlsm::RulesOrganizer::addEndRules(owlsm::globals::g_config.rules_config.rules);
+    auto organized_rules = owlsm::RulesOrganizer::organizeRules(owlsm::globals::g_config.rules_config.rules);
 
     owlsm::SystemSetup::start();
     setupShellDetection();

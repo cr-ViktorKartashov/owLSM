@@ -13,7 +13,7 @@
         },
         "type": {
             "type": "string",
-            "enum": ["EXEC", "FORK", "EXIT", "FILE_CREATE", "UNLINK", "MKDIR", "RMDIR", "CHMOD", "CHOWN", "WRITE", "READ", "RENAME", "NETWORK"],
+            "enum": ["EXEC", "FORK", "EXIT", "FILE_CREATE", "UNLINK", "MKDIR", "RMDIR", "CHMOD", "CHOWN", "WRITE", "READ", "RENAME", "NETWORK", "DNS_QUERY", "DNS_RESPONSE"],
             "description": "Event type"
         },
         "action": {
@@ -250,6 +250,102 @@
                                     "destination_port": { "type": "integer", "minimum": 0 },
                                     "protocol": { "type": "integer", "minimum": 0 },
                                     "ip_type": { "type": "integer", "minimum": 0 }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": { "type": { "const": "DNS_QUERY" } }
+            },
+            "then": {
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "required": ["network", "dns_query"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "network": {
+                                "type": "object",
+                                "required": ["direction", "source_ip", "destination_ip", "source_port", "destination_port", "protocol", "ip_type"],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "direction": { "type": "string", "enum": ["INCOMING", "OUTGOING"] },
+                                    "source_ip": { "type": "string" },
+                                    "destination_ip": { "type": "string" },
+                                    "source_port": { "type": "integer", "minimum": 0 },
+                                    "destination_port": { "type": "integer", "minimum": 0 },
+                                    "protocol": { "type": "integer", "minimum": 0 },
+                                    "ip_type": { "type": "integer", "minimum": 0 }
+                                }
+                            },
+                            "dns_query": {
+                                "type": "object",
+                                "required": ["txid", "question", "question_type"],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "txid": { "type": "integer", "minimum": 0 },
+                                    "question": { "type": "string" },
+                                    "question_type": { "type": "integer", "minimum": 0 }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "if": {
+                "properties": { "type": { "const": "DNS_RESPONSE" } }
+            },
+            "then": {
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "required": ["network", "dns_response"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "network": {
+                                "type": "object",
+                                "required": ["direction", "source_ip", "destination_ip", "source_port", "destination_port", "protocol", "ip_type"],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "direction": { "type": "string", "enum": ["INCOMING", "OUTGOING"] },
+                                    "source_ip": { "type": "string" },
+                                    "destination_ip": { "type": "string" },
+                                    "source_port": { "type": "integer", "minimum": 0 },
+                                    "destination_port": { "type": "integer", "minimum": 0 },
+                                    "protocol": { "type": "integer", "minimum": 0 },
+                                    "ip_type": { "type": "integer", "minimum": 0 }
+                                }
+                            },
+                            "dns_response": {
+                                "type": "object",
+                                "required": ["txid", "question", "question_type", "answer_count", "rcode", "answers"],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "txid": { "type": "integer", "minimum": 0 },
+                                    "question": { "type": "string" },
+                                    "question_type": { "type": "integer", "minimum": 0 },
+                                    "answer_count": { "type": "integer", "minimum": 0 },
+                                    "rcode": { "type": "integer", "minimum": 0 },
+                                    "answers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "required": ["type", "data_length", "ttl", "data"],
+                                            "additionalProperties": false,
+                                            "properties": {
+                                                "type": { "type": "integer", "minimum": 0 },
+                                                "data_length": { "type": "integer", "minimum": 0 },
+                                                "ttl": { "type": "integer", "minimum": 0 },
+                                                "data": { "type": "string" }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

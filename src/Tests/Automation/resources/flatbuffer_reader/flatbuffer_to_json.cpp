@@ -215,6 +215,69 @@ FlatbufferToJson::json FlatbufferToJson::eventDataJson(const owlsm::fb::Event* e
             }},
         };
     }
+    if (const auto* dq = ev->data_as_DnsQueryEventData())
+    {
+        const auto* ni = dq->network();
+        const auto* dns_query = dq->dns_query();
+        return json{
+            {"network", json{
+                {"direction", ni ? connectionDirectionName(ni->direction()) : "INCOMING"},
+                {"source_ip", ni ? fbStr(ni->source_ip()) : ""},
+                {"destination_ip", ni ? fbStr(ni->destination_ip()) : ""},
+                {"source_port", ni ? ni->source_port() : 0},
+                {"destination_port", ni ? ni->destination_port() : 0},
+                {"protocol", ni ? ni->protocol() : 0},
+                {"ip_type", ni ? ni->ip_type() : 0},
+            }},
+            {"dns_query", json{
+                {"txid", dns_query ? dns_query->txid() : 0},
+                {"question", dns_query ? fbStr(dns_query->question()) : ""},
+                {"question_type", dns_query ? dns_query->question_type() : 0},
+            }},
+        };
+    }
+    if (const auto* dr = ev->data_as_DnsResponseEventData())
+    {
+        const auto* ni = dr->network();
+        const auto* dns_response = dr->dns_response();
+        json answers = json::array();
+        if (dns_response && dns_response->answers())
+        {
+            for (const auto* answer : *dns_response->answers())
+            {
+                if (!answer)
+                {
+                    continue;
+                }
+                answers.push_back(json{
+                    {"type", answer->type()},
+                    {"data_length", answer->data_length()},
+                    {"ttl", answer->ttl()},
+                    {"data", fbStr(answer->data())},
+                });
+            }
+        }
+
+        return json{
+            {"network", json{
+                {"direction", ni ? connectionDirectionName(ni->direction()) : "INCOMING"},
+                {"source_ip", ni ? fbStr(ni->source_ip()) : ""},
+                {"destination_ip", ni ? fbStr(ni->destination_ip()) : ""},
+                {"source_port", ni ? ni->source_port() : 0},
+                {"destination_port", ni ? ni->destination_port() : 0},
+                {"protocol", ni ? ni->protocol() : 0},
+                {"ip_type", ni ? ni->ip_type() : 0},
+            }},
+            {"dns_response", json{
+                {"txid", dns_response ? dns_response->txid() : 0},
+                {"question", dns_response ? fbStr(dns_response->question()) : ""},
+                {"question_type", dns_response ? dns_response->question_type() : 0},
+                {"answer_count", dns_response ? dns_response->answer_count() : 0},
+                {"rcode", dns_response ? dns_response->rcode() : 0},
+                {"answers", answers},
+            }},
+        };
+    }
     return json::object();
 }
 

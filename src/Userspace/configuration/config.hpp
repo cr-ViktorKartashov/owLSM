@@ -33,9 +33,15 @@ struct FileMonitoringConfig
     FileMonitoringEventsConfig events;
 };
 
+struct NetworkMonitoringEventsConfig
+{
+    bool dns = true;
+};
+
 struct NetworkMonitoringConfig
 {
     bool enabled = true;
+    NetworkMonitoringEventsConfig events;
 };
 
 struct ShellCommandsMonitoringConfig

@@ -6,23 +6,23 @@
 
 namespace owlsm 
 {
-void RulesIntoBpfMaps::create_rule_maps_from_organized_rules(
+void RulesIntoBpfMaps::createRuleMapsFromOrganizedRules(
     const std::unordered_map<enum event_type, std::vector<std::shared_ptr<config::Rule>>>& organized_rules,
     const std::unordered_map<int, config::RuleString>& id_to_string,
     const std::unordered_map<int, config::Predicate>& id_to_predicate,
     const std::unordered_map<int, config::RuleIP>& id_to_ip)
 {
-    populate_predicates_map(id_to_predicate);
-    populate_rules_strings_map(id_to_string);
-    populate_idx_to_DFA_map(id_to_string);
-    populate_idx_to_accepting_states_map();
-    populate_rules_ips_map(id_to_ip);
-    populate_event_rule_maps(organized_rules);
+    populatePredicatesMap(id_to_predicate);
+    populateRulesStringsMap(id_to_string);
+    populateIdxToDFAMap(id_to_string);
+    populateIdxToAcceptingStatesMap();
+    populateRulesIpsMap(id_to_ip);
+    populateEventRuleMaps(organized_rules);
 }
 
-void RulesIntoBpfMaps::populate_predicates_map(const std::unordered_map<int, config::Predicate>& id_to_predicate)
+void RulesIntoBpfMaps::populatePredicatesMap(const std::unordered_map<int, config::Predicate>& id_to_predicate)
 {
-    int fd = create_pin_map(BPF_MAP_TYPE_HASH, std::string("predicates_map"), sizeof(struct predicate_t), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
+    int fd = createPinMap(BPF_MAP_TYPE_HASH, std::string("predicates_map"), sizeof(struct predicate_t), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
     for (const auto& [id, predicate] : id_to_predicate)
     {
         unsigned int key = static_cast<unsigned int>(id);
@@ -35,13 +35,13 @@ void RulesIntoBpfMaps::populate_predicates_map(const std::unordered_map<int, con
         }
     }
     
-    freeze_map(fd);
+    freezeMap(fd);
     close(fd);
 }
 
-void RulesIntoBpfMaps::populate_rules_strings_map(const std::unordered_map<int, config::RuleString>& id_to_string)
+void RulesIntoBpfMaps::populateRulesStringsMap(const std::unordered_map<int, config::RuleString>& id_to_string)
 {
-    int fd = create_pin_map(BPF_MAP_TYPE_HASH, std::string("rules_strings_map"), sizeof(struct rule_string_t), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
+    int fd = createPinMap(BPF_MAP_TYPE_HASH, std::string("rules_strings_map"), sizeof(struct rule_string_t), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
     for (const auto& [id, rule_string] : id_to_string)
     {
         unsigned int key = static_cast<unsigned int>(id);
@@ -55,13 +55,13 @@ void RulesIntoBpfMaps::populate_rules_strings_map(const std::unordered_map<int, 
         }
     }
     
-    freeze_map(fd);
+    freezeMap(fd);
     close(fd);
 }
 
-void RulesIntoBpfMaps::populate_idx_to_DFA_map(const std::unordered_map<int, config::RuleString>& id_to_string)
+void RulesIntoBpfMaps::populateIdxToDFAMap(const std::unordered_map<int, config::RuleString>& id_to_string)
 {
-    int fd = create_pin_map(BPF_MAP_TYPE_HASH, std::string("idx_to_DFA_map"), sizeof(struct flat_2d_dfa_array_t), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
+    int fd = createPinMap(BPF_MAP_TYPE_HASH, std::string("idx_to_DFA_map"), sizeof(struct flat_2d_dfa_array_t), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
     for (const auto& [id, rule_string] : id_to_string)
     {
         if (rule_string.string_type == STRING_TYPE_DEFAULT)
@@ -90,18 +90,18 @@ void RulesIntoBpfMaps::populate_idx_to_DFA_map(const std::unordered_map<int, con
         }
     }
     
-    freeze_map(fd);
+    freezeMap(fd);
     close(fd);
 }
 
-void RulesIntoBpfMaps::populate_idx_to_accepting_states_map()
+void RulesIntoBpfMaps::populateIdxToAcceptingStatesMap()
 {
     if (m_regex_accepting_states.empty())
     {
         return;
     }
     
-    int fd = create_pin_map(BPF_MAP_TYPE_HASH, std::string("idx_to_accepting_states_map"), sizeof(unsigned long long), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
+    int fd = createPinMap(BPF_MAP_TYPE_HASH, std::string("idx_to_accepting_states_map"), sizeof(unsigned long long), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
     for (const auto& [id, accepting_states] : m_regex_accepting_states)
     {
         unsigned int key = static_cast<unsigned int>(id);
@@ -113,18 +113,18 @@ void RulesIntoBpfMaps::populate_idx_to_accepting_states_map()
         }
     }
     
-    freeze_map(fd);
+    freezeMap(fd);
     close(fd);
 }
 
-void RulesIntoBpfMaps::populate_rules_ips_map(const std::unordered_map<int, config::RuleIP>& id_to_ip)
+void RulesIntoBpfMaps::populateRulesIpsMap(const std::unordered_map<int, config::RuleIP>& id_to_ip)
 {
     if (id_to_ip.empty())
     {
         return;
     }
     
-    int fd = create_pin_map(BPF_MAP_TYPE_HASH, std::string("rules_ips_map"), sizeof(struct rule_ip_t), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
+    int fd = createPinMap(BPF_MAP_TYPE_HASH, std::string("rules_ips_map"), sizeof(struct rule_ip_t), MAX_TOTAL_PREDS, BPF_F_NO_PREALLOC);
     for (const auto& [id, rule_ip] : id_to_ip)
     {
         unsigned int key = static_cast<unsigned int>(id);
@@ -137,11 +137,11 @@ void RulesIntoBpfMaps::populate_rules_ips_map(const std::unordered_map<int, conf
         }
     }
     
-    freeze_map(fd);
+    freezeMap(fd);
     close(fd);
 }
 
-void RulesIntoBpfMaps::populate_event_rule_maps(
+void RulesIntoBpfMaps::populateEventRuleMaps(
     const std::unordered_map<enum event_type, std::vector<std::shared_ptr<config::Rule>>>& organized_rules)
 {
     for (const auto& [etype, rules] : organized_rules)
@@ -151,8 +151,8 @@ void RulesIntoBpfMaps::populate_event_rule_maps(
             continue;
         }
         
-        std::string map_name = event_type_to_string(etype);
-        int fd = create_pin_map(BPF_MAP_TYPE_ARRAY, map_name, sizeof(rule_t), MAX_RULES_PER_MAP_PLUS1, 0);
+        std::string map_name = eventTypeToString(etype);
+        int fd = createPinMap(BPF_MAP_TYPE_ARRAY, map_name, sizeof(rule_t), MAX_RULES_PER_MAP_PLUS1, 0);
         
         for (unsigned int i = 0; i < rules.size(); i++)
         {
@@ -164,12 +164,12 @@ void RulesIntoBpfMaps::populate_event_rule_maps(
             }
         }
         
-        freeze_map(fd);
+        freezeMap(fd);
         close(fd);
     }
 }
 
-int RulesIntoBpfMaps::create_pin_map(enum bpf_map_type type,const std::string& map_name, size_t value_size, size_t max_entries, int flags)
+int RulesIntoBpfMaps::createPinMap(enum bpf_map_type type,const std::string& map_name, size_t value_size, size_t max_entries, int flags)
 {
     const std::string pin_path = std::string(owlsm::globals::SYS_FS_BPF_OWLSM_PATH) + "/" + map_name;
     int fd = bpf_obj_get(pin_path.c_str());
@@ -200,7 +200,7 @@ int RulesIntoBpfMaps::create_pin_map(enum bpf_map_type type,const std::string& m
     return fd;
 }
 
-void RulesIntoBpfMaps::freeze_map(int fd)
+void RulesIntoBpfMaps::freezeMap(int fd)
 {
     if (bpf_map_freeze(fd) < 0)
     {

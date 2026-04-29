@@ -27,6 +27,11 @@ namespace owlsm
                 bpf_program__set_autoattach(m_skel->progs.inet_conn_request_hook_2, false);
                 break;
             }
+            case DNS_QUERY:
+            {
+                bpf_program__set_autoattach(m_skel->progs.dns_query_hook, false);
+                break;
+            }
             default: break;
         }
     }
@@ -50,6 +55,11 @@ namespace owlsm
                 addProgramToArray(m_skel->progs.connect_hook_2, m_skel->maps.connect_prog_array);
                 addProgramToArray(m_skel->progs.accept_hook_2, m_skel->maps.accept_prog_array);
                 addProgramToArray(m_skel->progs.inet_conn_request_hook_2, m_skel->maps.inet_conn_request_prog_array);
+                break;
+            }
+            case DNS_QUERY:
+            {
+                // DNS uses direct LSM/TC attach paths and does not require a prog array.
                 break;
             }
             default: break;
@@ -82,6 +92,11 @@ namespace owlsm
                 attachProbe(m_skel->progs.accept_hook, &m_skel->links.accept_hook);
                 attachProbe(m_skel->progs.inet_conn_request_hook, &m_skel->links.inet_conn_request_hook);
                 attachProbe(m_skel->progs.inet_conn_established, &m_skel->links.inet_conn_established);
+                break;
+            }
+            case DNS_QUERY:
+            {
+                attachProbe(m_skel->progs.dns_query_hook, &m_skel->links.dns_query_hook);
                 break;
             }
             default: break;
